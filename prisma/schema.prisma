@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")   // URL com Pooler (Porta 6543) para as rotas da API na Vercel
+  directUrl = env("DIRECT_URL")     // URL de Conexão Direta (Porta 5432) para rodar migrações locais
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  name         String
+  type         String        // "checking" | "savings" | "credit" | "investment"
+  balance      Float         @default(0)
+  color        String        @default("#6366f1")
+  transactions Transaction[]
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Category {
+  id              String        @id @default(cuid())
+  name            String
+  color           String        @default("#6366f1")
+  icon            String        @default("tag")
+  transactionType String        @default("both") // "income" | "expense" | "both"
+  transactions    Transaction[]
+  user            User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?
+  createdAt       DateTime      @default(now())
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  description String
+  amount      Float
+  type        String    // "income" | "expense"
+  date        DateTime
+  notes       String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+  account     Account?  @relation(fields: [accountId], references: [id])
+  accountId   String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
