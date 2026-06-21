@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
 
   const token = request.cookies.get("auth-token")?.value
 
-  console.log("TOKEN EXISTE?", !!token)
+  console.log("TOKEN:", token ? "EXISTE" : "NÃO EXISTE")
 
   const session = token ? verifyToken(token) : null
 
