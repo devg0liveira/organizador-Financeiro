@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
+import { getSessionFromRequest } from "@/lib/auth"
 
 // GET /api/transactions
-// Query params: ?month=6&year=2026&type=income&categoryId=xxx&search=texto&page=1&limit=20
 export async function GET(req: NextRequest) {
+  const session = getSessionFromRequest(req)
+  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+
   try {
     const { searchParams } = req.nextUrl
     const month = searchParams.get("month")
@@ -16,14 +19,12 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") ?? "50")
     const skip = (page - 1) * limit
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { userId: session.userId }
 
     if (type) where.type = type
     if (categoryId) where.categoryId = categoryId
     if (accountId) where.accountId = accountId
-    if (search) {
-      where.description = { contains: search }
-    }
+    if (search) where.description = { contains: search }
 
     if (month && year) {
       const m = parseInt(month)
@@ -54,6 +55,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/transactions
 export async function POST(req: NextRequest) {
+  const session = getSessionFromRequest(req)
+  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+
   try {
     const body = await req.json()
     const { description, amount, type, date, notes, categoryId, accountId } = body
@@ -81,6 +85,7 @@ export async function POST(req: NextRequest) {
         notes: notes ?? null,
         categoryId: categoryId ?? null,
         accountId: accountId ?? null,
+        userId: session.userId,
       },
       include: { category: true, account: true },
     })

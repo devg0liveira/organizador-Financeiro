@@ -1,10 +1,15 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
+import { getSessionFromRequest } from "@/lib/auth"
 
 // GET /api/categories
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const session = getSessionFromRequest(req)
+  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+
   try {
     const categories = await prisma.category.findMany({
+      where: { userId: session.userId },
       orderBy: { name: "asc" },
       include: { _count: { select: { transactions: true } } },
     })
@@ -17,6 +22,9 @@ export async function GET() {
 
 // POST /api/categories
 export async function POST(req: NextRequest) {
+  const session = getSessionFromRequest(req)
+  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+
   try {
     const body = await req.json()
     const { name, color, icon, transactionType } = body
@@ -31,6 +39,7 @@ export async function POST(req: NextRequest) {
         color: color ?? "#6366f1",
         icon: icon ?? "tag",
         transactionType: transactionType ?? "both",
+        userId: session.userId,
       },
     })
 

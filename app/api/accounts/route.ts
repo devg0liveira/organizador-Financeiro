@@ -1,10 +1,15 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
+import { getSessionFromRequest } from "@/lib/auth"
 
 // GET /api/accounts
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const session = getSessionFromRequest(req)
+  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+
   try {
     const accounts = await prisma.account.findMany({
+      where: { userId: session.userId },
       orderBy: { name: "asc" },
       include: {
         transactions: true,
@@ -16,7 +21,6 @@ export async function GET() {
       const txSum = account.transactions.reduce((sum, tx) => {
         return tx.type === "income" ? sum + tx.amount : sum - tx.amount
       }, 0)
-      
       const { transactions, ...accountWithoutTransactions } = account
       return {
         ...accountWithoutTransactions,
@@ -33,6 +37,9 @@ export async function GET() {
 
 // POST /api/accounts
 export async function POST(req: NextRequest) {
+  const session = getSessionFromRequest(req)
+  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+
   try {
     const body = await req.json()
     const { name, type, balance, color } = body
@@ -58,6 +65,7 @@ export async function POST(req: NextRequest) {
         type,
         balance: parseFloat(balance ?? "0"),
         color: color ?? "#6366f1",
+        userId: session.userId,
       },
     })
 
