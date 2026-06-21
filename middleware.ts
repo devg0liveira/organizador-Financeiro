@@ -34,3 +34,22 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 }
+
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get("auth-token")?.value
+
+  console.log("TOKEN EXISTE?", !!token)
+
+  const session = token ? verifyToken(token) : null
+
+  console.log("SESSION:", session)
+
+  if (!session) {
+    console.log("REDIRECIONANDO PARA LOGIN")
+
+    const loginUrl = new URL("/login", request.url)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  return NextResponse.next()
+}
