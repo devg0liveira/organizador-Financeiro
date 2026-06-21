@@ -13,10 +13,7 @@ const PUBLIC_PATHS = [
 ]
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path))
-  if (isPublic) return NextResponse.next()
+  console.log("MIDDLEWARE EXECUTOU:", request.nextUrl.pathname)
 
   const token = request.cookies.get("auth-token")?.value
 
