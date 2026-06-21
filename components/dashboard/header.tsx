@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Bell, Search, ChevronDown, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -9,7 +10,41 @@ interface HeaderProps {
   onOpenMobileSidebar?: () => void
 }
 
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join("") || "U"
+}
+
 export function Header({ onOpenMobileSidebar }: HeaderProps) {
+  const [userName, setUserName] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadUser() {
+      try {
+        const response = await fetch("/api/auth/me", { cache: "no-store" })
+        if (!response.ok) return
+
+        const data = await response.json()
+        if (mounted && data?.name) {
+          setUserName(data.name)
+        }
+      } catch {
+        // ignore failures; keep the header fallback
+      }
+    }
+
+    loadUser()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
   return (
     <header className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 border-b border-border bg-card">
       <div className="flex items-center gap-4">
@@ -46,11 +81,13 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
         <div className="flex items-center gap-3 pl-4 border-l border-border">
           <Avatar className="w-9 h-9">
             <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-              GO
+              {userName ? getInitials(userName) : "U"}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-foreground">Gabriel Oliveira</span>
+            <span className="text-sm font-medium text-foreground">
+              {userName ?? "Usuário"}
+            </span>
             <span className="text-xs text-muted-foreground">Conta Premium</span>
           </div>
           <ChevronDown className="w-4 h-4 text-muted-foreground" />
