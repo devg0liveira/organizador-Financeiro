@@ -4,6 +4,7 @@ import { verifyToken } from "@/lib/auth"
 
 const PUBLIC_PATHS = [
   "/login",
+  "/register",
   "/api/auth/login",
   "/api/auth/register",
   "/_next",
@@ -13,19 +14,32 @@ const PUBLIC_PATHS = [
 ]
 
 export function middleware(request: NextRequest) {
-  console.log("MIDDLEWARE EXECUTOU:", request.nextUrl.pathname)
+  const { pathname } = request.nextUrl
+
+  console.log("MIDDLEWARE EXECUTOU:", pathname)
+
+  // Deixa rotas públicas passarem
+  const isPublicPath = PUBLIC_PATHS.some(path => pathname.startsWith(path))
+  if (isPublicPath) {
+    console.log("ROTA PÚBLICA:", pathname)
+    return NextResponse.next()
+  }
 
   const token = request.cookies.get("auth-token")?.value
-
-  console.log("TOKEN:", token ? "EXISTE" : "NÃO EXISTE")
-
   const session = token ? verifyToken(token) : null
 
-  console.log("SESSION:", session)
-
   if (!session) {
-    console.log("REDIRECIONANDO PARA LOGIN")
+    // ✅ CORREÇÃO: Se for rota de API, retorna 401 em vez de redirecionar
+    if (pathname.startsWith("/api/")) {
+      console.log("API SEM AUTORIZAÇÃO:", pathname)
+      return NextResponse.json(
+        { error: "Não autorizado" },
+        { status: 401 }
+      )
+    }
 
+    // Para rotas de página, redireciona para login
+    console.log("REDIRECIONANDO PARA LOGIN")
     const loginUrl = new URL("/login", request.url)
     return NextResponse.redirect(loginUrl)
   }
@@ -34,5 +48,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!login|register|api/auth|_next/static|_next/image|favicon.ico|icon|apple-icon).*)",
+  ],
 }

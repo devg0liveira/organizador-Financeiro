@@ -8,33 +8,54 @@ export default function LoginPage() {
   const router = useRouter()
   const [tab, setTab] = useState<"login" | "register" | "forgot">("login")
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" })
-  const [registerForm, setRegisterForm] = useState({ name: "", email: "", password: "" })
+  const [registerForm, setRegisterForm] = useState({ 
+    name: "", 
+    email: "", 
+    password: "",
+    confirmPassword: ""
+  })
   const [forgotForm, setForgotForm] = useState({ email: "" })
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
+    
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginForm),
       })
-      const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || "Erro ao fazer login")
+      
+      // ✅ CORREÇÃO 1: Tenta ler o JSON, mas protege contra respostas HTML (erros do middleware)
+      let data = null
+      const contentType = res.headers.get("content-type")
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json()
       } else {
-        router.push("/")
-        router.refresh()
+        throw new Error("Servidor retornou uma resposta inválida.")
       }
-    } catch {
-      setError("Erro de conexão. Tente novamente.")
+
+      if (!res.ok) {
+        // ✅ CORREÇÃO 2: Mostra o erro de verdade na tela!
+        setError(data?.error || "Email ou senha incorretos.")
+        return
+      }
+
+      // Login bem-sucedido
+      router.push("/")
+      router.refresh()
+      
+    } catch (err) {
+      console.error("Erro no login:", err)
+      setError(err instanceof Error ? err.message : "Erro de conexão. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -44,21 +65,52 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     setError("")
+    
+    // ✅ CORREÇÃO 3: Valida se as senhas coincidem
+    if (registerForm.password !== registerForm.confirmPassword) {
+      setError("As senhas não coincidem.")
+      setIsLoading(false)
+      return
+    }
+
+    // ✅ CORREÇÃO 4: Validação de força de senha
+    if (registerForm.password.length < 6) {
+      setError("A senha deve ter no mínimo 6 caracteres.")
+      setIsLoading(false)
+      return
+    }
+    
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registerForm),
+        body: JSON.stringify({
+          name: registerForm.name,
+          email: registerForm.email,
+          password: registerForm.password
+        }),
       })
-      const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || "Erro ao criar conta")
+      
+      let data = null
+      const contentType = res.headers.get("content-type")
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json()
       } else {
-        router.push("/")
-        router.refresh()
+        throw new Error("Servidor retornou uma resposta inválida.")
       }
-    } catch {
-      setError("Erro de conexão. Tente novamente.")
+
+      if (!res.ok) {
+        setError(data?.error || "Erro ao criar conta. Tente novamente.")
+        return
+      }
+
+      // Cadastro bem-sucedido
+      router.push("/")
+      router.refresh()
+      
+    } catch (err) {
+      console.error("Erro no cadastro:", err)
+      setError(err instanceof Error ? err.message : "Erro de conexão. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -76,14 +128,23 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(forgotForm),
       })
-      const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || "Erro ao solicitar recuperação de senha")
+      
+      let data = null
+      const contentType = res.headers.get("content-type")
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json()
       } else {
-        setSuccessMessage(data.message || "Verificação enviada para o seu e-mail.")
+        throw new Error("Servidor retornou uma resposta inválida.")
       }
-    } catch {
-      setError("Erro de conexão. Tente novamente.")
+      
+      if (!res.ok) {
+        setError(data?.error || "Erro ao solicitar recuperação de senha")
+      } else {
+        setSuccessMessage(data?.message || "Verificação enviada para o seu e-mail.")
+      }
+    } catch (err) {
+      console.error("Erro na recuperação de senha:", err)
+      setError(err instanceof Error ? err.message : "Erro de conexão. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -160,15 +221,15 @@ export default function LoginPage() {
               {tab === "login"
                 ? "Bem-vindo de volta"
                 : tab === "register"
-                ? "Criar conta"
-                : "Recuperar senha"}
+                  ? "Criar conta"
+                  : "Recuperar senha"}
             </h2>
             <p className="text-muted-foreground">
               {tab === "login"
                 ? "Entre na sua conta para continuar"
                 : tab === "register"
-                ? "Comece a controlar suas finanças hoje"
-                : "Informe seu e-mail para receber a verificação"}
+                  ? "Comece a controlar suas finanças hoje"
+                  : "Informe seu e-mail para receber a verificação"}
             </p>
           </div>
 
@@ -177,33 +238,30 @@ export default function LoginPage() {
             <button
               id="tab-login"
               onClick={() => { setTab("login"); setError(""); setSuccessMessage("") }}
-              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                tab === "login"
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${tab === "login"
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Entrar
             </button>
             <button
               id="tab-register"
               onClick={() => { setTab("register"); setError(""); setSuccessMessage("") }}
-              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                tab === "register"
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${tab === "register"
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Criar conta
             </button>
             <button
               id="tab-forgot"
               onClick={() => { setTab("forgot"); setError(""); setSuccessMessage("") }}
-              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                tab === "forgot"
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${tab === "forgot"
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Recuperar senha
             </button>
@@ -232,10 +290,11 @@ export default function LoginPage() {
                   id="input-email-login"
                   type="email"
                   required
+                  disabled={isLoading}
                   placeholder="seu@email.com"
                   value={loginForm.email}
                   onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -247,16 +306,18 @@ export default function LoginPage() {
                     id="input-password-login"
                     type={showPassword ? "text" : "password"}
                     required
+                    disabled={isLoading}
                     placeholder="••••••••"
                     value={loginForm.password}
                     onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                    className="w-full px-4 py-3 pr-12 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    className="w-full px-4 py-3 pr-12 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
                     id="toggle-password-login"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    disabled={isLoading}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -284,10 +345,11 @@ export default function LoginPage() {
                   id="input-email-forgot"
                   type="email"
                   required
+                  disabled={isLoading}
                   placeholder="seu@email.com"
                   value={forgotForm.email}
                   onChange={(e) => setForgotForm({ email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
               <button
@@ -313,10 +375,11 @@ export default function LoginPage() {
                   id="input-name-register"
                   type="text"
                   required
+                  disabled={isLoading}
                   placeholder="Seu nome"
                   value={registerForm.name}
                   onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -327,10 +390,11 @@ export default function LoginPage() {
                   id="input-email-register"
                   type="email"
                   required
+                  disabled={isLoading}
                   placeholder="seu@email.com"
                   value={registerForm.email}
                   onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -342,19 +406,48 @@ export default function LoginPage() {
                     id="input-password-register"
                     type={showPassword ? "text" : "password"}
                     required
+                    disabled={isLoading}
                     minLength={6}
                     placeholder="Mínimo 6 caracteres"
                     value={registerForm.password}
                     onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                    className="w-full px-4 py-3 pr-12 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    className="w-full px-4 py-3 pr-12 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
                     id="toggle-password-register"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    disabled={isLoading}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Confirmar senha
+                </label>
+                <div className="relative">
+                  <input
+                    id="input-confirm-password-register"
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    disabled={isLoading}
+                    minLength={6}
+                    placeholder="Repita a senha"
+                    value={registerForm.confirmPassword}
+                    onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
+                    className="w-full px-4 py-3 pr-12 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <button
+                    type="button"
+                    id="toggle-confirm-password-register"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    disabled={isLoading}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
