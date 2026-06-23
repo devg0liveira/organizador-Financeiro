@@ -9,7 +9,6 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
 
-  // Evita erro de hidratação: só renderiza após montar no cliente
   React.useEffect(() => {
     setMounted(true)
   }, [])

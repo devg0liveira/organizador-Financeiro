@@ -44,14 +44,12 @@ export default function LoginPage() {
       }
 
       if (!res.ok) {
-        // ✅ CORREÇÃO 2: Mostra o erro de verdade na tela!
+
         setError(data?.error || "Email ou senha incorretos.")
         return
       }
 
-      // Login bem-sucedido
-      router.push("/")
-      router.refresh()
+window.location.href = "/"
       
     } catch (err) {
       console.error("Erro no login:", err)
@@ -104,9 +102,7 @@ export default function LoginPage() {
         return
       }
 
-      // Cadastro bem-sucedido
-      router.push("/")
-      router.refresh()
+     window.location.href = "/"
       
     } catch (err) {
       console.error("Erro no cadastro:", err)

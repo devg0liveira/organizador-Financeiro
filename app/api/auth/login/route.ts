@@ -35,13 +35,11 @@ export async function POST(req: NextRequest) {
     console.log("Login aprovado")
     console.log("Token:", token)
 
-    // ✅ CORREÇÃO: Criar a resposta primeiro
     const response = NextResponse.json(
       { user: { id: user.id, name: user.name, email: user.email } },
       { status: 200 }
     )
 
-    // ✅ CORREÇÃO: Usar .cookies.set() em vez de headers
     response.cookies.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
