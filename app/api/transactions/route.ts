@@ -4,7 +4,7 @@ import { getSessionFromRequest } from "@/lib/auth"
 
 // GET /api/transactions
 export async function GET(req: NextRequest) {
-  const session = getSessionFromRequest(req)
+  const session = await getSessionFromRequest(req)
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/transactions
 export async function POST(req: NextRequest) {
-  const session = getSessionFromRequest(req)
+  const session = await getSessionFromRequest(req)
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {

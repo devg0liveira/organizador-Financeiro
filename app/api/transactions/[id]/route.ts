@@ -6,7 +6,7 @@ type Params = { params: Promise<{ id: string }> }
 
 // GET /api/transactions/[id]
 export async function GET(req: NextRequest, { params }: Params) {
-  const session = getSessionFromRequest(req)
+  const session = await getSessionFromRequest(req)
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 // PUT /api/transactions/[id]
 export async function PUT(req: NextRequest, { params }: Params) {
-  const session = getSessionFromRequest(req)
+  const session = await getSessionFromRequest(req)
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {
@@ -66,7 +66,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
 // DELETE /api/transactions/[id]
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const session = getSessionFromRequest(req)
+  const session = await getSessionFromRequest(req)
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {

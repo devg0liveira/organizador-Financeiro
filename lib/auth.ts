@@ -1,9 +1,12 @@
-import jwt from "jsonwebtoken"
+import { SignJWT, jwtVerify } from "jose"
 import { NextRequest } from "next/server"
 
 const JWT_SECRET = process.env.JWT_SECRET || "nexbank-dev-secret-change-in-production"
 const COOKIE_NAME = "auth-token"
 const TOKEN_EXPIRY = "7d"
+
+// Converte a string secret para Uint8Array (requisito do jose)
+const getSecretKey = () => new TextEncoder().encode(JWT_SECRET)
 
 export interface JwtPayload {
   userId: string
@@ -11,19 +14,28 @@ export interface JwtPayload {
   name: string
 }
 
-export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY })
+export async function signToken(payload: JwtPayload): Promise<string> {
+  return new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(TOKEN_EXPIRY)
+    .sign(getSecretKey())
 }
 
-export function verifyToken(token: string): JwtPayload | null {
+export async function verifyToken(token: string): Promise<JwtPayload | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as JwtPayload
+    const { payload } = await jwtVerify(token, getSecretKey())
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      name: payload.name as string,
+    }
   } catch {
     return null
   }
 }
 
-export function getSessionFromRequest(req: NextRequest): JwtPayload | null {
+export async function getSessionFromRequest(req: NextRequest): Promise<JwtPayload | null> {
   const token = req.cookies.get(COOKIE_NAME)?.value
   if (!token) return null
   return verifyToken(token)
