@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getCurrentMonthRange, groupByMonth, sumByCategory, calcBalance } from "@/lib/finance-helpers"
+import { getSessionFromRequest } from "@/lib/auth"
 
 // GET /api/dashboard
 // Query params: ?month=6&year=2026
 export async function GET(req: NextRequest) {
+  const session = await getSessionFromRequest(req)
+  if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+
   try {
     const { searchParams } = req.nextUrl
     const now = new Date()
@@ -23,14 +27,21 @@ export async function GET(req: NextRequest) {
     // Busca em paralelo: todas as transações do mês atual, anterior e para os gráficos
     const [currentTxs, prevTxs, allTxs, accounts] = await Promise.all([
       prisma.transaction.findMany({
-        where: { date: { gte: selectedStart, lte: selectedEnd } },
+        where: {
+          userId: session.userId,
+          date: { gte: selectedStart, lte: selectedEnd },
+        },
         include: { category: true },
       }),
       prisma.transaction.findMany({
-        where: { date: { gte: prevStart, lte: prevEnd } },
+        where: {
+          userId: session.userId,
+          date: { gte: prevStart, lte: prevEnd },
+        },
       }),
       prisma.transaction.findMany({
         where: {
+          userId: session.userId,
           date: {
             gte: new Date(now.getFullYear(), now.getMonth() - 11, 1),
             lte: end,
@@ -39,7 +50,12 @@ export async function GET(req: NextRequest) {
         include: { category: true },
       }),
       prisma.account.findMany({
-        include: { transactions: true },
+        where: { userId: session.userId },
+        include: {
+          transactions: {
+            where: { userId: session.userId },
+          },
+        },
       }),
     ])
 

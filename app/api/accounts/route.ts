@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/auth"
+import { defaultAccounts } from "@/lib/defaults"
 
 // GET /api/accounts
 export async function GET(req: NextRequest) {
@@ -8,7 +9,7 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {
-    const accounts = await prisma.account.findMany({
+    let accounts = await prisma.account.findMany({
       where: { userId: session.userId },
       orderBy: { name: "asc" },
       include: {
@@ -16,6 +17,32 @@ export async function GET(req: NextRequest) {
         _count: { select: { transactions: true } },
       },
     })
+
+    // Fallback se o usuário não tiver contas (ex: usuários antigos)
+    if (accounts.length === 0) {
+      await prisma.$transaction(
+        defaultAccounts.map((acc) =>
+          prisma.account.create({
+            data: {
+              name: acc.name,
+              type: acc.type,
+              balance: acc.balance,
+              color: acc.color,
+              userId: session.userId,
+            },
+          })
+        )
+      )
+
+      accounts = await prisma.account.findMany({
+        where: { userId: session.userId },
+        orderBy: { name: "asc" },
+        include: {
+          transactions: true,
+          _count: { select: { transactions: true } },
+        },
+      })
+    }
 
     const accountsWithCalculatedBalance = accounts.map((account) => {
       const txSum = account.transactions.reduce((sum, tx) => {

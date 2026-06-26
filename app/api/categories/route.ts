@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/auth"
+import { defaultCategories } from "@/lib/defaults"
 
 // GET /api/categories
 export async function GET(req: NextRequest) {
@@ -8,11 +9,35 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {
-    const categories = await prisma.category.findMany({
+    let categories = await prisma.category.findMany({
       where: { userId: session.userId },
       orderBy: { name: "asc" },
       include: { _count: { select: { transactions: true } } },
     })
+
+    // Fallback se o usuário não tiver categorias (ex: usuários antigos)
+    if (categories.length === 0) {
+      await prisma.$transaction(
+        defaultCategories.map((cat) =>
+          prisma.category.create({
+            data: {
+              name: cat.name,
+              color: cat.color,
+              icon: cat.icon,
+              transactionType: cat.transactionType,
+              userId: session.userId,
+            },
+          })
+        )
+      )
+
+      categories = await prisma.category.findMany({
+        where: { userId: session.userId },
+        orderBy: { name: "asc" },
+        include: { _count: { select: { transactions: true } } },
+      })
+    }
+
     return NextResponse.json(categories)
   } catch (error) {
     console.error("[GET /api/categories]", error)

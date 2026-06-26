@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { signToken, createAuthCookie } from "@/lib/auth"
+import { defaultAccounts, defaultCategories } from "@/lib/defaults"
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,8 +31,40 @@ export async function POST(req: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12)
-    const user = await prisma.user.create({
-      data: { name, email, passwordHash },
+    
+    // Transação para criar usuário e seus dados padrão
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: { name, email, passwordHash },
+      })
+
+      // Criar contas padrão
+      for (const acc of defaultAccounts) {
+        await tx.account.create({
+          data: {
+            name: acc.name,
+            type: acc.type,
+            balance: acc.balance,
+            color: acc.color,
+            userId: newUser.id,
+          },
+        })
+      }
+
+      // Criar categorias padrão
+      for (const cat of defaultCategories) {
+        await tx.category.create({
+          data: {
+            name: cat.name,
+            color: cat.color,
+            icon: cat.icon,
+            transactionType: cat.transactionType,
+            userId: newUser.id,
+          },
+        })
+      }
+
+      return newUser
     })
 
     const token = await signToken({ userId: user.id, email: user.email, name: user.name })
