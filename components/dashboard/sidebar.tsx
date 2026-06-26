@@ -14,6 +14,7 @@ import {
   Wallet,
 } from "lucide-react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 interface SidebarProps {
   activeItem: string
@@ -34,6 +35,18 @@ const bottomItems = [
 
 export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const router = useRouter()
+
+  async function handleLogout() {
+    if (loggingOut) return
+    setLoggingOut(true)
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+    } finally {
+      router.push("/login")
+    }
+  }
 
   return (
     <aside
@@ -91,10 +104,12 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
           </button>
         ))}
         <button
-          className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-200"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          {!collapsed && <span className="font-medium">Sair</span>}
+          <LogOut className={cn("w-5 h-5 flex-shrink-0", loggingOut && "animate-spin")} />
+          {!collapsed && <span className="font-medium">{loggingOut ? "Saindo..." : "Sair"}</span>}
         </button>
       </div>
 
