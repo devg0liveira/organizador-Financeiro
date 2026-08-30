@@ -145,7 +145,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="relative z-10 text-white/40 text-sm">
-          © 2024 NexBank. Todos os direitos reservados.
+          © 2026 NexBank. Todos os direitos reservados.
         </p>
       </div>
 
