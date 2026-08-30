@@ -108,7 +108,12 @@ export default function LoginPage() {
           <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm">
             <Wallet className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-white">NexBank</span>
+          <span className="text-2xl font-bold text-white flex items-center gap-1.5">
+            NexBank
+            <span className="text-xs py-0.5 px-1.5 rounded-full bg-white/20 text-white font-medium backdrop-blur-sm">
+              v2.0
+            </span>
+          </span>
         </div>
 
         {/* Features */}
@@ -152,7 +157,12 @@ export default function LoginPage() {
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
               <Wallet className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">NexBank</span>
+            <span className="text-xl font-bold text-foreground flex items-center gap-1.5">
+              NexBank
+              <span className="text-[10px] py-0.5 px-1.5 rounded-full bg-primary/10 text-primary font-medium">
+                v2.0
+              </span>
+            </span>
           </div>
 
           <div className="mb-8">
