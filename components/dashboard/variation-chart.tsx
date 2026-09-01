@@ -26,24 +26,24 @@ export function VariationChart() {
   const hasData = rawData.some((d) => d.receitas > 0 || d.despesas > 0)
 
   return (
-    <div className="p-6 rounded-xl bg-card border border-border">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6 rounded-xl bg-card border border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">
             Variação Mensal
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Saldo líquido por mês (Receitas - Despesas)
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-chart-1" style={{ backgroundColor: "oklch(0.75 0.15 160)" }} />
-            <span className="text-sm text-muted-foreground">Positivo</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">Positivo</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-chart-5" style={{ backgroundColor: "oklch(0.6 0.2 25)" }} />
-            <span className="text-sm text-muted-foreground">Negativo</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">Negativo</span>
           </div>
         </div>
       </div>

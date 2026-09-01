@@ -30,6 +30,7 @@ import {
 interface SidebarProps {
   activeItem: string
   onItemClick: (item: string) => void
+  isMobile?: boolean
 }
 
 const menuItems = [
@@ -44,7 +45,7 @@ const bottomItems = [
   { id: "help", label: "Ajuda", icon: HelpCircle },
 ]
 
-export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
+export function Sidebar({ activeItem, onItemClick, isMobile = false }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const router = useRouter()
@@ -62,21 +63,26 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col bg-sidebar border-r border-sidebar-border min-h-screen transition-all duration-300",
-        collapsed ? "w-20" : "w-64"
+        "flex flex-col bg-sidebar transition-all duration-300",
+        isMobile
+          ? "w-full h-full min-h-0 border-0"
+          : "border-r border-sidebar-border min-h-screen",
+        !isMobile && (collapsed ? "w-20" : "w-64")
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 p-6 border-b border-sidebar-border">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
-          <Wallet className="w-5 h-5 text-primary-foreground" />
+      {!isMobile && (
+        <div className="flex items-center gap-3 p-6 border-b border-sidebar-border">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
+            <Wallet className="w-5 h-5 text-primary-foreground" />
+          </div>
+          {!collapsed && (
+            <span className="text-xl font-bold text-sidebar-foreground">
+              NexBank
+            </span>
+          )}
         </div>
-        {!collapsed && (
-          <span className="text-xl font-bold text-sidebar-foreground">
-            NexBank
-          </span>
-        )}
-      </div>
+      )}
 
       {/* Menu */}
       <nav className="flex-1 p-4 space-y-2">
@@ -145,16 +151,18 @@ export function Sidebar({ activeItem, onItemClick }: SidebarProps) {
       </div>
 
       {/* Collapse Button */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute bottom-24 -right-3 w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {collapsed ? (
-          <ChevronRight className="w-4 h-4" />
-        ) : (
-          <ChevronLeft className="w-4 h-4" />
-        )}
-      </button>
+      {!isMobile && (
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="hidden md:flex absolute bottom-24 -right-3 w-6 h-6 rounded-full bg-card border border-border items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {collapsed ? (
+            <ChevronRight className="w-4 h-4" />
+          ) : (
+            <ChevronLeft className="w-4 h-4" />
+          )}
+        </button>
+      )}
     </aside>
   )
 }

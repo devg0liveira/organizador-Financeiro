@@ -53,8 +53,8 @@ export default function DashboardPage() {
         <Sidebar activeItem={activeItem} onItemClick={setActiveItem} />
       </div>
 
-      <Drawer open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <DrawerContent className="bg-sidebar border-r border-sidebar-border">
+      <Drawer direction="left" open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <DrawerContent className="bg-sidebar border-r border-sidebar-border w-72 max-w-[85vw] h-full p-0 flex flex-col">
           <div className="flex items-center justify-between gap-3 p-5 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
@@ -68,23 +68,26 @@ export default function DashboardPage() {
               </Button>
             </DrawerClose>
           </div>
-          <Sidebar
-            activeItem={activeItem}
-            onItemClick={(item) => {
-              setActiveItem(item)
-              setIsSidebarOpen(false)
-            }}
-          />
+          <div className="flex-1 overflow-y-auto">
+            <Sidebar
+              isMobile
+              activeItem={activeItem}
+              onItemClick={(item) => {
+                setActiveItem(item)
+                setIsSidebarOpen(false)
+              }}
+            />
+          </div>
         </DrawerContent>
       </Drawer>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header onOpenMobileSidebar={() => setIsSidebarOpen(true)} />
 
-        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex-1 overflow-auto p-3 sm:p-6 lg:p-8">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <StatCard
               title="Saldo Total"
               value={isLoading ? "Carregando..." : formatBRL(totalBalance)}

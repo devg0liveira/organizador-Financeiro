@@ -46,20 +46,20 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
     }
   }, [])
   return (
-    <header className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 border-b border-border bg-card">
-      <div className="flex items-center gap-4">
+    <header className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 border-b border-border bg-card">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="md:hidden shrink-0"
           onClick={onOpenMobileSidebar}
         >
           <Menu className="w-5 h-5 text-muted-foreground" />
         </Button>
 
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">Dashboard</h1>
         <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary">
-          <Search className="w-4 h-4 text-muted-foreground" />
+          <Search className="w-4 h-4 text-muted-foreground shrink-0" />
           <input
             type="text"
             placeholder="Buscar transações..."
@@ -68,9 +68,9 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative shrink-0">
           <Bell className="w-5 h-5 text-muted-foreground" />
           <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
         </Button>
@@ -78,19 +78,19 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
         <ThemeToggle />
 
         {/* User */}
-        <div className="flex items-center gap-3 pl-4 border-l border-border">
-          <Avatar className="w-9 h-9">
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+        <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-border">
+          <Avatar className="w-8 h-8 sm:w-9 sm:h-9 shrink-0">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
               {userName ? getInitials(userName) : "U"}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-foreground">
+          <div className="hidden sm:flex flex-col">
+            <span className="text-sm font-medium text-foreground truncate max-w-[120px]">
               {userName ?? "Usuário"}
             </span>
             <span className="text-xs text-muted-foreground">Conta Premium</span>
           </div>
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          <ChevronDown className="hidden sm:block w-4 h-4 text-muted-foreground" />
         </div>
       </div>
     </header>

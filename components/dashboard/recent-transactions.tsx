@@ -128,13 +128,13 @@ export function RecentTransactions() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   return (
-    <div className="p-6 rounded-xl bg-card border border-border">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6 rounded-xl bg-card border border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">
             Transações Recentes
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Últimas movimentações salvas
           </p>
         </div>
@@ -152,50 +152,52 @@ export function RecentTransactions() {
       ) : (
         <>
           {/* Opções de filtro por mês e ano */}
-          <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <span className="text-sm text-muted-foreground">Ano</span>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_OPTION}>Todos</SelectItem>
-                  {yearOptions.map((year) => (
-                    <SelectItem key={year} value={year}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm text-muted-foreground">Ano:</span>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-24 sm:w-28 h-9 text-xs sm:text-sm">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_OPTION}>Todos</SelectItem>
+                    {yearOptions.map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm text-muted-foreground">Mês:</span>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-28 sm:w-36 h-9 text-xs sm:text-sm">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_OPTION}>Todos</SelectItem>
+                    {MONTH_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.key} value={opt.key}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <span className="text-sm text-muted-foreground">Mês</span>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_OPTION}>Todos</SelectItem>
-                  {MONTH_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.key} value={opt.key}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-chart-1" style={{ backgroundColor: "oklch(0.75 0.15 160)" }} />
-              <span className="text-sm text-muted-foreground">Positivo</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-chart-5" style={{ backgroundColor: "oklch(0.6 0.2 25)" }} />
-              <span className="text-sm text-muted-foreground">Negativo</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-chart-1" style={{ backgroundColor: "oklch(0.75 0.15 160)" }} />
+                <span className="text-xs sm:text-sm text-muted-foreground">Positivo</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-chart-5" style={{ backgroundColor: "oklch(0.6 0.2 25)" }} />
+                <span className="text-xs sm:text-sm text-muted-foreground">Negativo</span>
+              </div>
             </div>
           </div>
 
@@ -205,7 +207,7 @@ export function RecentTransactions() {
               <p className="text-xs text-muted-foreground/60 mt-1">Altere o mês para ver outras movimentações.</p>
             </div>
           ) : (
-            <div className="space-y-4 max-h-[520px] overflow-y-auto">
+            <div className="space-y-3 sm:space-y-4 max-h-[520px] overflow-y-auto pr-1">
               {filteredTransactions.map((transaction) => {
                 const IconComponent =
                   (transaction.category?.icon && iconMap[transaction.category.icon]) || Tag
@@ -213,12 +215,12 @@ export function RecentTransactions() {
                 return (
                   <div
                     key={transaction.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors group"
+                    className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors group gap-2 sm:gap-4"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
                       <div
                         className={cn(
-                          "flex items-center justify-center w-10 h-10 rounded-lg",
+                          "flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg shrink-0",
                           transaction.type === "income"
                             ? "bg-primary/10"
                             : "bg-destructive/10"
@@ -226,18 +228,18 @@ export function RecentTransactions() {
                       >
                         <IconComponent
                           className={cn(
-                            "w-5 h-5",
+                            "w-4 h-4 sm:w-5 sm:h-5",
                             transaction.type === "income"
                               ? "text-primary"
                               : "text-destructive"
                           )}
                         />
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground text-xs sm:text-sm truncate">
                           {transaction.description}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
                           {transaction.category?.name || "Sem categoria"} • {new Date(transaction.date).toLocaleDateString("pt-BR", {
                             day: "2-digit",
                             month: "short",
@@ -247,16 +249,16 @@ export function RecentTransactions() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                      <div className="flex items-center gap-1">
                         {transaction.type === "income" ? (
-                          <ArrowDownLeft className="w-4 h-4 text-primary" />
+                          <ArrowDownLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
                         ) : (
-                          <ArrowUpRight className="w-4 h-4 text-destructive" />
+                          <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-destructive shrink-0" />
                         )}
                         <span
                           className={cn(
-                            "font-semibold",
+                            "text-xs sm:text-sm font-semibold whitespace-nowrap",
                             transaction.type === "income"
                               ? "text-primary"
                               : "text-destructive"
@@ -276,12 +278,12 @@ export function RecentTransactions() {
                             onClick={() => showNoteDialog(transaction.notes)}
                             disabled={!transaction.notes}
                             className={cn(
-                              "p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors",
-                              !transaction.notes && "cursor-not-allowed opacity-50"
+                              "p-1 sm:p-2 rounded-md text-muted-foreground hover:text-foreground transition-colors shrink-0",
+                              !transaction.notes && "cursor-not-allowed opacity-40"
                             )}
                             title={transaction.notes ? "Ver observação" : "Sem observação"}
                           >
-                            <Info className="w-4 h-4" />
+                            <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -294,10 +296,10 @@ export function RecentTransactions() {
                           setToDelete({ id: transaction.id, description: transaction.description })
                           setIsDeleteDialogOpen(true)
                         }}
-                        className="p-1 text-muted-foreground hover:text-destructive rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="p-1 text-muted-foreground hover:text-destructive rounded opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0"
                         title="Excluir transação"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </button>
                     </div>
                   </div>

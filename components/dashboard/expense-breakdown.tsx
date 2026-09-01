@@ -91,22 +91,22 @@ export function ExpenseBreakdown() {
   }))
 
   return (
-    <div className="p-6 rounded-xl bg-card border border-border h-full flex flex-col justify-between">
+    <div className="p-4 sm:p-6 rounded-xl bg-card border border-border h-full flex flex-col justify-between">
       <div>
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">
             Despesas por Categoria
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Distribuição das despesas
           </p>
 
           {/* Filtros de mês e ano */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center mt-4">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground">Ano:</span>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-24 h-8 text-xs">
+                <SelectTrigger className="w-20 sm:w-24 h-8 text-xs">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
@@ -120,10 +120,10 @@ export function ExpenseBreakdown() {
               </Select>
             </div>
 
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground">Mês:</span>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-28 h-8 text-xs">
+                <SelectTrigger className="w-24 sm:w-28 h-8 text-xs">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>

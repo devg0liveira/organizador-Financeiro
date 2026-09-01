@@ -20,24 +20,24 @@ export function CashFlowChart() {
   const hasData = data.some((d) => d.receitas > 0 || d.despesas > 0)
 
   return (
-    <div className="p-6 rounded-xl bg-card border border-border">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6 rounded-xl bg-card border border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="text-base sm:text-lg font-semibold text-foreground">
             Fluxo de Caixa
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Receitas vs Despesas - Últimos 12 meses
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-chart-1" />
-            <span className="text-sm text-muted-foreground">Receitas</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">Receitas</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-chart-2" />
-            <span className="text-sm text-muted-foreground">Despesas</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">Despesas</span>
           </div>
         </div>
       </div>
