@@ -52,8 +52,8 @@ export async function GET(req: NextRequest) {
         where,
         include: { category: true, account: true },
         orderBy: { date: "desc" },
-        skip,
-        take: limit,
+        // skip,
+        // take: limit,
       }),
       prisma.transaction.count({ where }),
     ])
