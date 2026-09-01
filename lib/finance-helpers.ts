@@ -9,6 +9,51 @@ export function formatCurrency(value: number): string {
 }
 
 /**
+ * Converte uma string "YYYY-MM-DD" para um Date em UTC ao meio-dia.
+ * Usar meio-dia UTC garante que a data de calendário nunca muda
+ * independentemente do fuso horário do usuário (UTC-12 a UTC+14).
+ */
+export function parseLocalDateToUTCNoon(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0))
+}
+
+/**
+ * Formata um Date como string "YYYY-MM-DD" usando a data LOCAL do navegador.
+ * Usado no frontend para capturar a data que o usuário realmente vê.
+ */
+export function formatDateToLocalISO(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Formata uma data de transação (armazenada em UTC) para exibição pt-BR.
+ * Usa timeZone: "UTC" para evitar o recuo de fuso horário.
+ */
+export function formatTransactionDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  })
+}
+
+/**
+ * Calcula mês e ano anteriores de forma segura (sem underflow).
+ */
+export function getPreviousMonth(year: number, month: number): { year: number; month: number } {
+  if (month === 1) {
+    return { year: year - 1, month: 12 }
+  }
+  return { year, month: month - 1 }
+}
+
+/**
  * Retorna o início e o fim de um mês específico
  * @param year  Ano (ex: 2026)
  * @param month Mês 1-indexado (ex: 6 = junho)
@@ -16,6 +61,16 @@ export function formatCurrency(value: number): string {
 export function getMonthRange(year: number, month: number) {
   const start = new Date(year, month - 1, 1, 0, 0, 0, 0)
   const end = new Date(year, month, 0, 23, 59, 59, 999)
+  return { start, end }
+}
+
+/**
+ * Retorna o início e o fim de um mês em UTC.
+ * Usado para queries no Supabase/PostgreSQL que armazenam timestamps em UTC.
+ */
+export function getMonthRangeUTC(year: number, month: number) {
+  const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
+  const end = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999))
   return { start, end }
 }
 
@@ -80,7 +135,7 @@ export function groupByMonth(
 
     const monthTxs = transactions.filter((tx) => {
       const txDate = new Date(tx.date)
-      return txDate.getFullYear() === year && txDate.getMonth() === month
+      return txDate.getUTCFullYear() === year && txDate.getUTCMonth() === month
     })
 
     const receitas = monthTxs

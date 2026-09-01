@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/auth"
+import { parseLocalDateToUTCNoon, getMonthRangeUTC } from "@/lib/finance-helpers"
 
 // GET /api/transactions
 export async function GET(req: NextRequest) {
@@ -29,9 +30,20 @@ export async function GET(req: NextRequest) {
     if (month && year) {
       const m = parseInt(month)
       const y = parseInt(year)
+
+      // Validação de entrada
+      if (m < 1 || m > 12 || y < 1900 || y > 2100) {
+        return NextResponse.json(
+          { error: "Parâmetros inválidos: month 1-12, year válido" },
+          { status: 400 }
+        )
+      }
+
+      // FIX: Usar ranges UTC para filtrar no Supabase/PostgreSQL
+      const range = getMonthRangeUTC(y, m)
       where.date = {
-        gte: new Date(y, m - 1, 1),
-        lte: new Date(y, m, 0, 23, 59, 59, 999),
+        gte: range.start,
+        lte: range.end,
       }
     }
 
@@ -81,7 +93,13 @@ export async function POST(req: NextRequest) {
         description,
         amount: Math.abs(parseFloat(amount)),
         type,
-        date: new Date(date),
+        date: (() => {
+          // FIX: Usar UTC noon para evitar shift de timezone
+          if (typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            return parseLocalDateToUTCNoon(date)
+          }
+          return new Date(date)
+        })(),
         notes: notes ?? null,
         categoryId: categoryId ?? null,
         accountId: accountId ?? null,

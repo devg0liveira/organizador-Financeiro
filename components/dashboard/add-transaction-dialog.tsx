@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useFinance, Transaction } from "@/hooks/use-finance"
+import { formatDateToLocalISO } from "@/lib/finance-helpers"
 import {
   Dialog,
   DialogContent,
@@ -68,7 +69,8 @@ export function AddTransactionDialog({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: defaultType,
-      date: new Date().toISOString().split("T")[0],
+      // FIX: Usar formatDateToLocalISO para capturar a data local do navegador
+      date: formatDateToLocalISO(new Date()),
       description: "",
       notes: "",
     },
@@ -81,7 +83,14 @@ export function AddTransactionDialog({
         description: transactionToEdit.description,
         amount: transactionToEdit.amount,
         type: transactionToEdit.type,
-        date: new Date(transactionToEdit.date).toISOString().split("T")[0],
+        // FIX: Usar formatDateToLocalISO com timeZone UTC para evitar shift
+        date: (() => {
+          const d = new Date(transactionToEdit.date)
+          const year = d.getUTCFullYear()
+          const month = String(d.getUTCMonth() + 1).padStart(2, "0")
+          const day = String(d.getUTCDate()).padStart(2, "0")
+          return `${year}-${month}-${day}`
+        })(),
         categoryId: transactionToEdit.categoryId || undefined,
         accountId: transactionToEdit.accountId || undefined,
         notes: transactionToEdit.notes || "",
@@ -89,7 +98,8 @@ export function AddTransactionDialog({
     } else {
       reset({
         type: defaultType,
-        date: new Date().toISOString().split("T")[0],
+        // FIX: Usar formatDateToLocalISO para capturar a data local
+        date: formatDateToLocalISO(new Date()),
         description: "",
         notes: "",
         amount: undefined,
@@ -115,7 +125,8 @@ export function AddTransactionDialog({
         description: values.description,
         amount: values.amount,
         type: values.type,
-        date: new Date(values.date).toISOString(),
+        // FIX: Enviar YYYY-MM-DD cru — o backend fará o parse seguro com UTC noon
+        date: values.date,
         notes: values.notes,
         categoryId: values.categoryId || undefined,
         accountId: values.accountId,
@@ -125,7 +136,8 @@ export function AddTransactionDialog({
         description: values.description,
         amount: values.amount,
         type: values.type,
-        date: new Date(values.date).toISOString(),
+        // FIX: Enviar YYYY-MM-DD cru — o backend fará o parse seguro com UTC noon
+        date: values.date,
         notes: values.notes,
         categoryId: values.categoryId || undefined,
         accountId: values.accountId,

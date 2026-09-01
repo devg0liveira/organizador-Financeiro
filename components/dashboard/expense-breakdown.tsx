@@ -33,7 +33,7 @@ export function ExpenseBreakdown() {
   ]
 
   const yearOptions = Array.from(
-    new Set(transactions.map((transaction) => new Date(transaction.date).getFullYear()))
+    new Set(transactions.map((transaction) => new Date(transaction.date).getUTCFullYear()))
   )
     .sort((a, b) => b - a)
     .map(String)
@@ -44,8 +44,9 @@ export function ExpenseBreakdown() {
       if (transaction.type !== "expense") return false
 
       const date = new Date(transaction.date)
-      const monthKey = String(date.getMonth() + 1).padStart(2, "0")
-      const yearKey = String(date.getFullYear())
+      // FIX: Usar métodos UTC para evitar shift de fuso horário nos filtros
+      const monthKey = String(date.getUTCMonth() + 1).padStart(2, "0")
+      const yearKey = String(date.getUTCFullYear())
 
       if (selectedYear !== ALL_OPTION && yearKey !== selectedYear) {
         return false

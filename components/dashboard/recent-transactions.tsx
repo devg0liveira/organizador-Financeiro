@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useFinance, Transaction } from "@/hooks/use-finance"
+import { formatTransactionDate } from "@/lib/finance-helpers"
 import {
   ShoppingCart,
   Utensils,
@@ -104,7 +105,7 @@ export function RecentTransactions() {
   ]
 
   const yearOptions = Array.from(
-    new Set(transactions.map((transaction) => new Date(transaction.date).getFullYear()))
+    new Set(transactions.map((transaction) => new Date(transaction.date).getUTCFullYear()))
   )
     .sort((a, b) => b - a)
     .map(String)
@@ -112,8 +113,10 @@ export function RecentTransactions() {
   const filteredTransactions = [...transactions]
     .filter((transaction) => {
       const date = new Date(transaction.date)
-      const monthKey = String(date.getMonth() + 1).padStart(2, "0")
-      const yearKey = String(date.getFullYear())
+      // FIX: Usar métodos UTC para evitar que transações do dia 1º
+      // apareçam no mês anterior por causa do fuso horário
+      const monthKey = String(date.getUTCMonth() + 1).padStart(2, "0")
+      const yearKey = String(date.getUTCFullYear())
 
       if (selectedYear !== ALL_OPTION && yearKey !== selectedYear) {
         return false
@@ -240,11 +243,7 @@ export function RecentTransactions() {
                           {transaction.description}
                         </p>
                         <p className="text-[11px] sm:text-xs text-muted-foreground truncate">
-                          {transaction.category?.name || "Sem categoria"} • {new Date(transaction.date).toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          {transaction.category?.name || "Sem categoria"} • {formatTransactionDate(transaction.date)}
                         </p>
                       </div>
                     </div>

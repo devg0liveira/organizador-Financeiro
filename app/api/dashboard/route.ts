@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
-import { getCurrentMonthRange, groupByMonth, sumByCategory, calcBalance } from "@/lib/finance-helpers"
+import { getMonthRangeUTC, getPreviousMonth, groupByMonth, sumByCategory } from "@/lib/finance-helpers"
 import { getSessionFromRequest } from "@/lib/auth"
 
 // GET /api/dashboard
@@ -15,14 +15,27 @@ export async function GET(req: NextRequest) {
     const month = parseInt(searchParams.get("month") ?? String(now.getMonth() + 1))
     const year = parseInt(searchParams.get("year") ?? String(now.getFullYear()))
 
-    // Período do mês selecionado
-    const { start, end } = getCurrentMonthRange()
-    const selectedStart = new Date(year, month - 1, 1)
-    const selectedEnd = new Date(year, month, 0, 23, 59, 59, 999)
+    // FIX: Validação de entrada
+    if (month < 1 || month > 12 || year < 1900 || year > 2100) {
+      return NextResponse.json(
+        { error: "Parâmetros inválidos: month 1-12, year válido" },
+        { status: 400 }
+      )
+    }
 
-    // Mês anterior para comparação
-    const prevStart = new Date(year, month - 2, 1)
-    const prevEnd = new Date(year, month - 1, 0, 23, 59, 59, 999)
+    // FIX: Usar getMonthRangeUTC para queries seguras no Supabase/PostgreSQL
+    const selectedRange = getMonthRangeUTC(year, month)
+    const selectedStart = selectedRange.start
+    const selectedEnd = selectedRange.end
+
+    // FIX: Calcular mês anterior de forma segura (sem underflow jan→dez)
+    const prev = getPreviousMonth(year, month)
+    const prevRange = getMonthRangeUTC(prev.year, prev.month)
+    const prevStart = prevRange.start
+    const prevEnd = prevRange.end
+
+    // FIX: Período de 12 meses para gráficos, também em UTC
+    const twelveMonthsAgo = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 11, 1, 0, 0, 0, 0))
 
     // Busca em paralelo: todas as transações do mês atual, anterior e para os gráficos
     const [currentTxs, prevTxs, allTxs, accounts] = await Promise.all([
@@ -43,8 +56,8 @@ export async function GET(req: NextRequest) {
         where: {
           userId: session.userId,
           date: {
-            gte: new Date(now.getFullYear(), now.getMonth() - 11, 1),
-            lte: end,
+            gte: twelveMonthsAgo,
+            lte: selectedEnd,
           },
         },
         include: { category: true },
@@ -132,3 +145,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Erro ao calcular dados do dashboard" }, { status: 500 })
   }
 }
+

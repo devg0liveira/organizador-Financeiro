@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/auth"
+import { parseLocalDateToUTCNoon } from "@/lib/finance-helpers"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -49,7 +50,15 @@ export async function PUT(req: NextRequest, { params }: Params) {
         ...(description !== undefined && { description }),
         ...(amount !== undefined && { amount: Math.abs(parseFloat(amount)) }),
         ...(type !== undefined && { type }),
-        ...(date !== undefined && { date: new Date(date) }),
+        ...(date !== undefined && {
+          date: (() => {
+            // FIX: Usar UTC noon para evitar shift de timezone
+            if (typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              return parseLocalDateToUTCNoon(date)
+            }
+            return new Date(date)
+          })(),
+        }),
         ...(notes !== undefined && { notes }),
         ...(categoryId !== undefined && { categoryId }),
         ...(accountId !== undefined && { accountId }),
