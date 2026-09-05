@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/auth"
+import { accountUpdateSchema } from "@/lib/validations"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -11,21 +12,35 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   try {
     const { id } = await params
-    const body = await req.json()
-    const { name, type, balance, color } = body
+    const rawBody = await req.json().catch(() => null)
+    const parseResult = accountUpdateSchema.safeParse(rawBody)
 
-    // Verify ownership — rejeita se a conta não pertence ao usuário autenticado
-    const existing = await prisma.account.findFirst({ where: { id, userId: session.userId } })
-    if (!existing) return NextResponse.json({ error: "Conta não encontrada" }, { status: 404 })
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.errors[0]?.message || "Dados de conta inválidos" },
+        { status: 400 }
+      )
+    }
+
+    // Verifica se a conta pertence ao usuário
+    const existing = await prisma.account.findFirst({
+      where: { id, userId: session.userId },
+    })
+    if (!existing) {
+      return NextResponse.json({ error: "Conta não encontrada" }, { status: 404 })
+    }
+
+    const { name, type, balance, color } = parseResult.data
+
+    const updateData: Record<string, unknown> = {}
+    if (name !== undefined) updateData.name = name
+    if (type !== undefined) updateData.type = type
+    if (balance !== undefined) updateData.balance = balance
+    if (color !== undefined) updateData.color = color
 
     const account = await prisma.account.update({
       where: { id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(type !== undefined && { type }),
-        ...(balance !== undefined && { balance: parseFloat(balance) }),
-        ...(color !== undefined && { color }),
-      },
+      data: updateData,
     })
 
     return NextResponse.json(account)
@@ -43,15 +58,20 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   try {
     const { id } = await params
 
-    // Verify ownership — rejeita se a conta não pertence ao usuário autenticado
-    const existing = await prisma.account.findFirst({ where: { id, userId: session.userId } })
-    if (!existing) return NextResponse.json({ error: "Conta não encontrada" }, { status: 404 })
+    // Verifica se a conta pertence ao usuário
+    const existing = await prisma.account.findFirst({
+      where: { id, userId: session.userId },
+    })
+    if (!existing) {
+      return NextResponse.json({ error: "Conta não encontrada" }, { status: 404 })
+    }
 
     // Desvincula transações antes de deletar a conta
     await prisma.transaction.updateMany({
-      where: { accountId: id },
+      where: { accountId: id, userId: session.userId },
       data: { accountId: null },
     })
+
     await prisma.account.delete({ where: { id } })
     return NextResponse.json({ message: "Conta removida com sucesso" })
   } catch (error) {

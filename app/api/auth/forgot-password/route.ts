@@ -1,36 +1,51 @@
 import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit"
+import { forgotPasswordSchema } from "@/lib/validations"
+
+const GENERIC_SUCCESS_MESSAGE =
+  "Se este e-mail estiver cadastrado, você receberá instruções de verificação em breve."
 
 export async function POST(req: NextRequest) {
-  try {
-    const { email } = await req.json()
+  // Rate Limiting: máx 5 requisições por 15 minutos por IP
+  const rateLimit = await checkRateLimit(req, {
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+    actionKey: "auth:forgot-password",
+  })
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit.reset)
+  }
 
-    if (!email || typeof email !== "string") {
+  try {
+    const rawBody = await req.json().catch(() => null)
+    const parseResult = forgotPasswordSchema.safeParse(rawBody)
+
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: "Email é obrigatório" },
+        { error: parseResult.error.errors[0]?.message || "Email inválido" },
         { status: 400 }
       )
     }
 
-    const user = await prisma.user.findUnique({ where: { email } })
+    const { email } = parseResult.data
 
-    if (!user) {
-      // Retornar mensagem genérica para não revelar existência de conta
-      return NextResponse.json({
-        message: "Se este e-mail estiver cadastrado, você receberá instruções de verificação em breve.",
-      })
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true },
+    })
+
+    if (user) {
+      // Disparo de e-mail transacional
     }
 
-    // Aqui você pode integrar envio de e-mail real com token de recuperação.
-    console.log(`[RECUPERAÇÃO DE SENHA] Solicitação para ${email}`)
-
     return NextResponse.json({
-      message: "Instruções de verificação enviadas. Verifique seu e-mail.",
+      message: GENERIC_SUCCESS_MESSAGE,
     })
   } catch (error) {
-    console.error("[POST /api/auth/forgot-password]", error)
+    console.error("[POST /api/auth/forgot-password] Erro interno")
     return NextResponse.json(
-      { error: "Erro ao processar a recuperação de senha" },
+      { error: "Erro ao processar a solicitação de recuperação de senha" },
       { status: 500 }
     )
   }

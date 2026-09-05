@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/auth"
 import { defaultCategories } from "@/lib/defaults"
+import { categoryCreateSchema } from "@/lib/validations"
 
 // GET /api/categories
 export async function GET(req: NextRequest) {
@@ -12,10 +13,18 @@ export async function GET(req: NextRequest) {
     let categories = await prisma.category.findMany({
       where: { userId: session.userId },
       orderBy: { name: "asc" },
-      include: { _count: { select: { transactions: true } } },
+      include: {
+        _count: {
+          select: {
+            transactions: {
+              where: { userId: session.userId },
+            },
+          },
+        },
+      },
     })
 
-    // Fallback se o usuário não tiver categorias (ex: usuários antigos)
+    // Fallback se o usuário não tiver categorias
     if (categories.length === 0) {
       await prisma.$transaction(
         defaultCategories.map((cat) =>
@@ -34,7 +43,15 @@ export async function GET(req: NextRequest) {
       categories = await prisma.category.findMany({
         where: { userId: session.userId },
         orderBy: { name: "asc" },
-        include: { _count: { select: { transactions: true } } },
+        include: {
+          _count: {
+            select: {
+              transactions: {
+                where: { userId: session.userId },
+              },
+            },
+          },
+        },
       })
     }
 
@@ -51,19 +68,24 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {
-    const body = await req.json()
-    const { name, color, icon, transactionType } = body
+    const rawBody = await req.json().catch(() => null)
+    const parseResult = categoryCreateSchema.safeParse(rawBody)
 
-    if (!name) {
-      return NextResponse.json({ error: "Campo obrigatório: name" }, { status: 400 })
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.errors[0]?.message || "Dados de categoria inválidos" },
+        { status: 400 }
+      )
     }
+
+    const { name, color, icon, transactionType } = parseResult.data
 
     const category = await prisma.category.create({
       data: {
         name,
-        color: color ?? "#6366f1",
-        icon: icon ?? "tag",
-        transactionType: transactionType ?? "both",
+        color,
+        icon,
+        transactionType,
         userId: session.userId,
       },
     })

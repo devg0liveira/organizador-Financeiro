@@ -3,36 +3,48 @@ import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { signToken, createAuthCookie } from "@/lib/auth"
 import { defaultAccounts, defaultCategories } from "@/lib/defaults"
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit"
+import { registerSchema } from "@/lib/validations"
 
 export async function POST(req: NextRequest) {
+  // Rate Limiting: máx 5 cadastros por hora por IP
+  const rateLimit = await checkRateLimit(req, {
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+    actionKey: "auth:register",
+  })
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit.reset)
+  }
+
   try {
-    const { name, email, password } = await req.json()
+    const rawBody = await req.json().catch(() => null)
+    const parseResult = registerSchema.safeParse(rawBody)
 
-    if (!name || !email || !password) {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: "Nome, email e senha são obrigatórios" },
+        { error: parseResult.error.errors[0]?.message || "Dados de cadastro inválidos" },
         { status: 400 }
       )
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "A senha deve ter pelo menos 6 caracteres" },
-        { status: 400 }
-      )
-    }
+    const { name, email, password } = parseResult.data
 
-    const existing = await prisma.user.findUnique({ where: { email } })
+    const existing = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    })
+
     if (existing) {
       return NextResponse.json(
-        { error: "Já existe uma conta com este e-mail" },
+        { error: "Já existe uma conta associada a este endereço de e-mail" },
         { status: 409 }
       )
     }
 
     const passwordHash = await bcrypt.hash(password, 12)
-    
-    // Transação para criar usuário e seus dados padrão
+
+    // Transação atômica para criar usuário e seus dados padrão
     const user = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: { name, email, passwordHash },
@@ -77,7 +89,7 @@ export async function POST(req: NextRequest) {
       }
     )
   } catch (error) {
-    console.error("[POST /api/auth/register]", error)
-    return NextResponse.json({ error: "Erro ao criar conta" }, { status: 500 })
+    console.error("[POST /api/auth/register] Erro interno:", error)
+    return NextResponse.json({ error: "Erro ao criar conta de usuário" }, { status: 500 })
   }
 }

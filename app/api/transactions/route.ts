@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/auth"
 import { parseLocalDateToUTCNoon, getMonthRangeUTC } from "@/lib/finance-helpers"
+import { transactionCreateSchema } from "@/lib/validations"
 
 // GET /api/transactions
 export async function GET(req: NextRequest) {
@@ -18,7 +19,6 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search")
     const page = parseInt(searchParams.get("page") ?? "1")
     const limit = parseInt(searchParams.get("limit") ?? "50")
-    const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = { userId: session.userId }
 
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       const m = parseInt(month)
       const y = parseInt(year)
 
-      // Validação de entrada
+      // Validação de entrada de parâmetros de data
       if (m < 1 || m > 12 || y < 1900 || y > 2100) {
         return NextResponse.json(
           { error: "Parâmetros inválidos: month 1-12, year válido" },
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
         )
       }
 
-      // FIX: Usar ranges UTC para filtrar no Supabase/PostgreSQL
+      // Usar ranges UTC para filtrar com precisão
       const range = getMonthRangeUTC(y, m)
       where.date = {
         gte: range.start,
@@ -52,8 +52,6 @@ export async function GET(req: NextRequest) {
         where,
         include: { category: true, account: true },
         orderBy: { date: "desc" },
-        // skip,
-        // take: limit,
       }),
       prisma.transaction.count({ where }),
     ])
@@ -71,35 +69,59 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {
-    const body = await req.json()
-    const { description, amount, type, date, notes, categoryId, accountId } = body
+    const rawBody = await req.json().catch(() => null)
+    const parseResult = transactionCreateSchema.safeParse(rawBody)
 
-    if (!description || amount === undefined || !type || !date) {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: "Campos obrigatórios: description, amount, type, date" },
+        { error: parseResult.error.errors[0]?.message || "Dados de transação inválidos" },
         { status: 400 }
       )
     }
 
-    if (!["income", "expense"].includes(type)) {
-      return NextResponse.json(
-        { error: "type deve ser 'income' ou 'expense'" },
-        { status: 400 }
-      )
+    const { description, amount, type, date, notes, categoryId, accountId } = parseResult.data
+
+    // Se accountId for informado, valida titularidade
+    if (accountId) {
+      const account = await prisma.account.findFirst({
+        where: { id: accountId, userId: session.userId },
+        select: { id: true },
+      })
+      if (!account) {
+        return NextResponse.json(
+          { error: "Conta especificada não existe ou não pertence ao usuário" },
+          { status: 400 }
+        )
+      }
     }
+
+    // Se categoryId for informado, valida titularidade
+    if (categoryId) {
+      const category = await prisma.category.findFirst({
+        where: { id: categoryId, userId: session.userId },
+        select: { id: true },
+      })
+      if (!category) {
+        return NextResponse.json(
+          { error: "Categoria especificada não existe ou não pertence ao usuário" },
+          { status: 400 }
+        )
+      }
+    }
+
+    const parsedDate = (() => {
+      if (typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return parseLocalDateToUTCNoon(date)
+      }
+      return new Date(date)
+    })()
 
     const transaction = await prisma.transaction.create({
       data: {
         description,
-        amount: Math.abs(parseFloat(amount)),
+        amount,
         type,
-        date: (() => {
-          // FIX: Usar UTC noon para evitar shift de timezone
-          if (typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            return parseLocalDateToUTCNoon(date)
-          }
-          return new Date(date)
-        })(),
+        date: parsedDate,
         notes: notes ?? null,
         categoryId: categoryId ?? null,
         accountId: accountId ?? null,

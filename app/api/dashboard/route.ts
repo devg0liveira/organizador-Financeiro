@@ -15,7 +15,6 @@ export async function GET(req: NextRequest) {
     const month = parseInt(searchParams.get("month") ?? String(now.getMonth() + 1))
     const year = parseInt(searchParams.get("year") ?? String(now.getFullYear()))
 
-    // FIX: Validação de entrada
     if (month < 1 || month > 12 || year < 1900 || year > 2100) {
       return NextResponse.json(
         { error: "Parâmetros inválidos: month 1-12, year válido" },
@@ -23,18 +22,15 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // FIX: Usar getMonthRangeUTC para queries seguras no Supabase/PostgreSQL
     const selectedRange = getMonthRangeUTC(year, month)
     const selectedStart = selectedRange.start
     const selectedEnd = selectedRange.end
 
-    // FIX: Calcular mês anterior de forma segura (sem underflow jan→dez)
     const prev = getPreviousMonth(year, month)
     const prevRange = getMonthRangeUTC(prev.year, prev.month)
     const prevStart = prevRange.start
     const prevEnd = prevRange.end
 
-    // FIX: Período de 12 meses para gráficos, também em UTC
     const twelveMonthsAgo = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 11, 1, 0, 0, 0, 0))
 
     // Busca em paralelo: todas as transações do mês atual, anterior e para os gráficos

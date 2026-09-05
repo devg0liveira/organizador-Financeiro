@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/auth"
 import { parseLocalDateToUTCNoon } from "@/lib/finance-helpers"
+import { transactionUpdateSchema } from "@/lib/validations"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -33,36 +34,71 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   try {
     const { id } = await params
-    const body = await req.json()
-    const { description, amount, type, date, notes, categoryId, accountId } = body
+    const rawBody = await req.json().catch(() => null)
+    const parseResult = transactionUpdateSchema.safeParse(rawBody)
 
-    // Verify ownership
-    const existing = await prisma.transaction.findFirst({ where: { id, userId: session.userId } })
-    if (!existing) return NextResponse.json({ error: "Transação não encontrada" }, { status: 404 })
-
-    if (type && !["income", "expense"].includes(type)) {
-      return NextResponse.json({ error: "type deve ser 'income' ou 'expense'" }, { status: 400 })
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.errors[0]?.message || "Dados de atualização inválidos" },
+        { status: 400 }
+      )
     }
+
+    // Valida titularidade da transação
+    const existing = await prisma.transaction.findFirst({
+      where: { id, userId: session.userId },
+    })
+    if (!existing) {
+      return NextResponse.json({ error: "Transação não encontrada" }, { status: 404 })
+    }
+
+    const { description, amount, type, date, notes, categoryId, accountId } = parseResult.data
+
+    // Se accountId for alterado, valida a conta
+    if (accountId) {
+      const account = await prisma.account.findFirst({
+        where: { id: accountId, userId: session.userId },
+        select: { id: true },
+      })
+      if (!account) {
+        return NextResponse.json(
+          { error: "Conta informada não encontrada ou não pertence ao usuário" },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Se categoryId for alterado, valida a categoria
+    if (categoryId) {
+      const category = await prisma.category.findFirst({
+        where: { id: categoryId, userId: session.userId },
+        select: { id: true },
+      })
+      if (!category) {
+        return NextResponse.json(
+          { error: "Categoria informada não encontrada ou não pertence ao usuário" },
+          { status: 400 }
+        )
+      }
+    }
+
+    const updateData: Record<string, unknown> = {}
+    if (description !== undefined) updateData.description = description
+    if (amount !== undefined) updateData.amount = amount
+    if (type !== undefined) updateData.type = type
+    if (date !== undefined) {
+      updateData.date =
+        typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}$/)
+          ? parseLocalDateToUTCNoon(date)
+          : new Date(date)
+    }
+    if (notes !== undefined) updateData.notes = notes
+    if (categoryId !== undefined) updateData.categoryId = categoryId
+    if (accountId !== undefined) updateData.accountId = accountId
 
     const transaction = await prisma.transaction.update({
       where: { id },
-      data: {
-        ...(description !== undefined && { description }),
-        ...(amount !== undefined && { amount: Math.abs(parseFloat(amount)) }),
-        ...(type !== undefined && { type }),
-        ...(date !== undefined && {
-          date: (() => {
-            // FIX: Usar UTC noon para evitar shift de timezone
-            if (typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-              return parseLocalDateToUTCNoon(date)
-            }
-            return new Date(date)
-          })(),
-        }),
-        ...(notes !== undefined && { notes }),
-        ...(categoryId !== undefined && { categoryId }),
-        ...(accountId !== undefined && { accountId }),
-      },
+      data: updateData,
       include: { category: true, account: true },
     })
 
@@ -80,8 +116,12 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
   try {
     const { id } = await params
-    const existing = await prisma.transaction.findFirst({ where: { id, userId: session.userId } })
-    if (!existing) return NextResponse.json({ error: "Transação não encontrada" }, { status: 404 })
+    const existing = await prisma.transaction.findFirst({
+      where: { id, userId: session.userId },
+    })
+    if (!existing) {
+      return NextResponse.json({ error: "Transação não encontrada" }, { status: 404 })
+    }
 
     await prisma.transaction.delete({ where: { id } })
     return NextResponse.json({ message: "Transação removida com sucesso" })

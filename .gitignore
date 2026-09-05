@@ -9,6 +9,7 @@ __v0_jsx-dev-runtime.ts
 # Environment variables
 .env
 .env*.local
+.env.example
 
 # SQLite local databases
 *.db
@@ -25,4 +26,16 @@ node_modules
 .next/
 .DS_Store
 organizador-Financeiro/
-*.tsbuildinfo
+*.tsbuildinfo
+
+# Internal scripts and documentation
+scripts/
+supabase/
+relatorio_*.md
+FLUXO_*.md
+CORRECAO_*.md
+
+# Lockfiles redundantes
+pnpm-lock.yaml
+pnpm-workspace.yaml
+

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/auth"
 import { defaultAccounts } from "@/lib/defaults"
+import { accountCreateSchema } from "@/lib/validations"
 
 // GET /api/accounts
 export async function GET(req: NextRequest) {
@@ -13,12 +14,20 @@ export async function GET(req: NextRequest) {
       where: { userId: session.userId },
       orderBy: { name: "asc" },
       include: {
-        transactions: true,
-        _count: { select: { transactions: true } },
+        transactions: {
+          where: { userId: session.userId },
+        },
+        _count: {
+          select: {
+            transactions: {
+              where: { userId: session.userId },
+            },
+          },
+        },
       },
     })
 
-    // Fallback se o usuário não tiver contas (ex: usuários antigos)
+    // Fallback se o usuário não tiver contas (ex: usuários recém-criados ou migrados)
     if (accounts.length === 0) {
       await prisma.$transaction(
         defaultAccounts.map((acc) =>
@@ -38,8 +47,16 @@ export async function GET(req: NextRequest) {
         where: { userId: session.userId },
         orderBy: { name: "asc" },
         include: {
-          transactions: true,
-          _count: { select: { transactions: true } },
+          transactions: {
+            where: { userId: session.userId },
+          },
+          _count: {
+            select: {
+              transactions: {
+                where: { userId: session.userId },
+              },
+            },
+          },
         },
       })
     }
@@ -68,30 +85,24 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
 
   try {
-    const body = await req.json()
-    const { name, type, balance, color } = body
+    const rawBody = await req.json().catch(() => null)
+    const parseResult = accountCreateSchema.safeParse(rawBody)
 
-    if (!name || !type) {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: "Campos obrigatórios: name, type" },
+        { error: parseResult.error.errors[0]?.message || "Dados de conta inválidos" },
         { status: 400 }
       )
     }
 
-    const validTypes = ["checking", "savings", "credit", "investment"]
-    if (!validTypes.includes(type)) {
-      return NextResponse.json(
-        { error: `type deve ser um de: ${validTypes.join(", ")}` },
-        { status: 400 }
-      )
-    }
+    const { name, type, balance, color } = parseResult.data
 
     const account = await prisma.account.create({
       data: {
         name,
         type,
-        balance: parseFloat(balance ?? "0"),
-        color: color ?? "#6366f1",
+        balance,
+        color,
         userId: session.userId,
       },
     })
