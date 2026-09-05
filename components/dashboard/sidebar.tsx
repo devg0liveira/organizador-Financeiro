@@ -2,8 +2,8 @@
 
 import { cn } from "@/lib/utils"
 import {
-  Home,
-  ArrowUpDown,
+  LayoutDashboard,
+  ReceiptText,
   CreditCard,
   PieChart,
   Settings,
@@ -11,7 +11,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Wallet,
+  ShieldCheck,
+  TrendingUp,
 } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -31,24 +32,23 @@ interface SidebarProps {
   activeItem: string
   onItemClick: (item: string) => void
   isMobile?: boolean
+  showLogo?: boolean
+  className?: string
 }
 
 const menuItems = [
-  { id: "overview", label: "Visão Geral", icon: Home },
-  { id: "transactions", label: "Transações", icon: ArrowUpDown },
-  { id: "cards", label: "Cartões", icon: CreditCard },
-  { id: "analytics", label: "Análises", icon: PieChart },
+  { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
+  { id: "simulation", label: "Simulador de Investimentos", icon: TrendingUp },
 ]
 
-const bottomItems = [
-  { id: "settings", label: "Configurações", icon: Settings },
-  { id: "help", label: "Ajuda", icon: HelpCircle },
-]
+const bottomItems: Array<{ id: string; label: string; icon: any }> = []
 
-export function Sidebar({ activeItem, onItemClick, isMobile = false }: SidebarProps) {
+export function Sidebar({ activeItem, onItemClick, isMobile = false, showLogo = true, className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const router = useRouter()
+
+  const isCollapsed = !isMobile && collapsed
 
   async function handleLogout() {
     if (loggingOut) return
@@ -57,112 +57,137 @@ export function Sidebar({ activeItem, onItemClick, isMobile = false }: SidebarPr
       await fetch("/api/auth/logout", { method: "POST" })
     } finally {
       router.push("/login")
+      router.refresh()
     }
   }
 
   return (
     <aside
       className={cn(
-        "flex flex-col bg-sidebar transition-all duration-300",
-        isMobile
-          ? "w-full h-full min-h-0 border-0"
-          : "border-r border-sidebar-border min-h-screen",
-        !isMobile && (collapsed ? "w-20" : "w-64")
+        "flex flex-col bg-sidebar border-sidebar-border transition-all duration-200 select-none",
+        isMobile ? "w-full h-full border-none min-h-0" : "border-r min-h-screen",
+        !isMobile && (isCollapsed ? "w-20" : "w-64"),
+        className
       )}
     >
       {/* Logo */}
-      {!isMobile && (
-        <div className="flex items-center gap-3 p-6 border-b border-sidebar-border">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
-            <Wallet className="w-5 h-5 text-primary-foreground" />
+      {showLogo && (
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border shrink-0">
+          <div className="flex items-center justify-center w-9 h-9 rounded-md bg-emerald-600 text-white font-bold shrink-0 shadow-sm">
+            <span className="font-mono text-sm tracking-tight">NB</span>
           </div>
-          {!collapsed && (
-            <span className="text-xl font-bold text-sidebar-foreground">
-              NexBank
-            </span>
+          {!isCollapsed && (
+            <div className="flex flex-col">
+              <span className="text-base font-bold tracking-tight text-sidebar-foreground">
+                NexBank
+              </span>
+              <span className="text-[10px] uppercase font-mono tracking-wider text-muted-foreground">
+                Gestão Financeira
+              </span>
+            </div>
           )}
         </div>
       )}
 
-      {/* Menu */}
-      <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onItemClick(item.id)}
-            className={cn(
-              "flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-all duration-200",
-              activeItem === item.id
-                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            )}
-          >
-            <item.icon className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span className="font-medium">{item.label}</span>}
-          </button>
-        ))}
+      {/* Menu Principal */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <div className={cn("px-3 mb-2", isCollapsed && "hidden")}>
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">
+            Módulos Principais
+          </span>
+        </div>
+        {menuItems.map((item) => {
+          const isActive = activeItem === item.id
+          return (
+            <button
+              key={item.id}
+              onClick={() => onItemClick(item.id)}
+              title={isCollapsed ? item.label : undefined}
+              className={cn(
+                "flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-xs font-medium transition-colors text-left",
+                isActive
+                  ? "bg-secondary text-foreground font-semibold border border-border shadow-xs"
+                  : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground border border-transparent"
+              )}
+            >
+              <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-emerald-500" : "text-muted-foreground")} />
+              {!isCollapsed && <span>{item.label}</span>}
+            </button>
+          )
+        })}
       </nav>
 
-      {/* Bottom Menu */}
-      <div className="p-4 space-y-2 border-t border-sidebar-border">
-        {bottomItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onItemClick(item.id)}
-            className={cn(
-              "flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-all duration-200",
-              activeItem === item.id
-                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            )}
-          >
-            <item.icon className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span className="font-medium">{item.label}</span>}
-          </button>
-        ))}
+      {/* Menu Inferior */}
+      <div className="p-3 space-y-1 border-t border-sidebar-border shrink-0 mt-auto">
+        {!isCollapsed && (
+          <div className="p-3 mb-2 rounded-md bg-secondary/50 border border-border text-[11px] text-muted-foreground flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span>Dados criptografados e isolados</span>
+          </div>
+        )}
+
+        {bottomItems.map((item) => {
+          const isActive = activeItem === item.id
+          return (
+            <button
+              key={item.id}
+              onClick={() => onItemClick(item.id)}
+              title={isCollapsed ? item.label : undefined}
+              className={cn(
+                "flex items-center gap-3 w-full px-3 py-2 rounded-md text-xs font-medium transition-colors text-left",
+                isActive
+                  ? "bg-secondary text-foreground font-semibold border border-border"
+                  : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground border border-transparent"
+              )}
+            >
+              <item.icon className="w-4 h-4 shrink-0 text-muted-foreground" />
+              {!isCollapsed && <span>{item.label}</span>}
+            </button>
+          )
+        })}
+
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <button
               disabled={loggingOut}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-left"
+              title={isCollapsed ? "Encerrar Sessão" : undefined}
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left"
             >
-              <LogOut className={cn("w-5 h-5 flex-shrink-0", loggingOut && "animate-spin")} />
-              {!collapsed && <span className="font-medium">{loggingOut ? "Saindo..." : "Sair"}</span>}
+              <LogOut className={cn("w-4 h-4 shrink-0", loggingOut && "animate-spin")} />
+              {!isCollapsed && <span>{loggingOut ? "Encerrando..." : "Encerrar Sessão"}</span>}
             </button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Tem certeza que deseja sair?</AlertDialogTitle>
+              <AlertDialogTitle>Deseja encerrar a sessão?</AlertDialogTitle>
               <AlertDialogDescription>
-                Você precisará fazer login novamente para acessar suas informações financeiras no NexBank.
+                Seus dados locais serão descarregados com segurança. Você poderá entrar novamente a qualquer momento.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>Permanecer</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleLogout}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Sair
+                Encerrar Acesso
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
 
-      {/* Collapse Button */}
+      {/* Botão de colapso para desktop */}
       {!isMobile && (
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden md:flex absolute bottom-24 -right-3 w-6 h-6 rounded-full bg-card border border-border items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          className="hidden md:flex absolute bottom-20 -right-3 w-6 h-6 rounded-full bg-card border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors shadow-xs z-10"
+          aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
         >
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
+          {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
         </button>
       )}
     </aside>
   )
 }
+

@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ArrowDownLeft, ArrowUpRight, Check } from "lucide-react"
 
 const transactionSchema = z.object({
   description: z.string().min(1, "A descrição é obrigatória"),
@@ -34,7 +35,7 @@ const transactionSchema = z.object({
   type: z.enum(["income", "expense"]),
   date: z.string().min(1, "A data é obrigatória"),
   categoryId: z.string().optional(),
-  accountId: z.string().min(1, "Selecione uma conta"),
+  accountId: z.string().min(1, "Selecione a conta de liquidação"),
   notes: z.string().optional(),
 })
 
@@ -69,28 +70,21 @@ export function AddTransactionDialog({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: defaultType,
-      // FIX: Usar formatDateToLocalISO para capturar a data local do navegador
       date: formatDateToLocalISO(new Date()),
       description: "",
       notes: "",
     },
   })
 
-  // Efeito para resetar os valores quando a transação para edição mudar
   useEffect(() => {
     if (transactionToEdit) {
       reset({
         description: transactionToEdit.description,
         amount: transactionToEdit.amount,
         type: transactionToEdit.type,
-        // FIX: Usar formatDateToLocalISO com timeZone UTC para evitar shift
-        date: (() => {
-          const d = new Date(transactionToEdit.date)
-          const year = d.getUTCFullYear()
-          const month = String(d.getUTCMonth() + 1).padStart(2, "0")
-          const day = String(d.getUTCDate()).padStart(2, "0")
-          return `${year}-${month}-${day}`
-        })(),
+        date: typeof transactionToEdit.date === "string" 
+          ? transactionToEdit.date.split("T")[0] 
+          : formatDateToLocalISO(new Date(transactionToEdit.date)),
         categoryId: transactionToEdit.categoryId || undefined,
         accountId: transactionToEdit.accountId || undefined,
         notes: transactionToEdit.notes || "",
@@ -98,7 +92,6 @@ export function AddTransactionDialog({
     } else {
       reset({
         type: defaultType,
-        // FIX: Usar formatDateToLocalISO para capturar a data local
         date: formatDateToLocalISO(new Date()),
         description: "",
         notes: "",
@@ -109,7 +102,6 @@ export function AddTransactionDialog({
     }
   }, [transactionToEdit, open, defaultType, reset])
 
-  // Assistir mudanças no tipo para filtrar as categorias
   const selectedType = watch("type")
 
   const filteredCategories = categories.filter(
@@ -125,22 +117,20 @@ export function AddTransactionDialog({
         description: values.description,
         amount: values.amount,
         type: values.type,
-        // FIX: Enviar YYYY-MM-DD cru — o backend fará o parse seguro com UTC noon
         date: values.date,
         notes: values.notes,
         categoryId: values.categoryId || undefined,
-        accountId: values.accountId,
+        accountId: values.accountId || undefined,
       })
     } else {
       success = await addTransaction({
         description: values.description,
         amount: values.amount,
         type: values.type,
-        // FIX: Enviar YYYY-MM-DD cru — o backend fará o parse seguro com UTC noon
         date: values.date,
         notes: values.notes,
         categoryId: values.categoryId || undefined,
-        accountId: values.accountId,
+        accountId: values.accountId || undefined,
       })
     }
 
@@ -153,122 +143,148 @@ export function AddTransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-base font-bold text-foreground">
             {isEditing
               ? selectedType === "income"
                 ? "Editar Receita"
                 : "Editar Despesa"
               : selectedType === "income"
-                ? "Adicionar Receita"
-                : "Adicionar Despesa"}
+                ? "Novo Lançamento: Receita (+)"
+                : "Novo Lançamento: Despesa (-)"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs text-muted-foreground">
             {isEditing
-              ? "Modifique os campos desejados para atualizar o lançamento no banco de dados."
-              : "Preencha os campos abaixo para salvar sua movimentação no banco."}
+              ? "Modifique os dados da transação para recalcular o balanço financeiro."
+              : "Preencha as informações para registrar o fluxo financeiro."}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-          {/* Tipo */}
-          <div className="space-y-2">
-            <Label>Tipo de Movimentação</Label>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5 py-2">
+          {/* Alternador de Tipo */}
+          <div>
+            <Label className="text-xs font-semibold text-foreground mb-1.5 block">
+              Natureza da Movimentação
+            </Label>
             <div className="grid grid-cols-2 gap-2">
-              <Button
+              <button
                 type="button"
-                variant={selectedType === "income" ? "default" : "outline"}
-                className={selectedType === "income" ? "bg-primary text-primary-foreground" : ""}
+                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-bold border transition-colors ${
+                  selectedType === "income"
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                    : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                }`}
                 onClick={() => setValue("type", "income")}
               >
-                Receita
-              </Button>
-              <Button
+                <ArrowDownLeft className="w-4 h-4" />
+                Receita (Entrada)
+              </button>
+              <button
                 type="button"
-                variant={selectedType === "expense" ? "default" : "outline"}
-                className={selectedType === "expense" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-bold border transition-colors ${
+                  selectedType === "expense"
+                    ? "bg-red-600 text-white border-red-600 shadow-xs"
+                    : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+                }`}
                 onClick={() => setValue("type", "expense")}
               >
-                Despesa
-              </Button>
+                <ArrowUpRight className="w-4 h-4" />
+                Despesa (Saída)
+              </button>
             </div>
           </div>
 
           {/* Descrição */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+          <div>
+            <Label htmlFor="description" className="text-xs font-semibold text-foreground mb-1 block">
+              Descrição do Lançamento
+            </Label>
             <Input
               id="description"
-              placeholder="Ex: Salário, Supermercado, Uber"
+              placeholder="Ex: Salário Mensal, Supermercado, Aluguel"
+              className="text-xs h-9 bg-secondary/50"
               {...register("description")}
             />
             {errors.description && (
-              <p className="text-xs text-destructive">{errors.description.message}</p>
+              <p className="text-[11px] text-destructive mt-1 font-mono">{errors.description.message}</p>
             )}
           </div>
 
-          {/* Valor */}
-          <div className="space-y-2">
-            <Label htmlFor="amount">Valor (R$)</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              placeholder="0,00"
-              {...register("amount")}
-            />
-            {errors.amount && (
-              <p className="text-xs text-destructive">{errors.amount.message}</p>
-            )}
+          {/* Grid Valor e Data */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="amount" className="text-xs font-semibold text-foreground mb-1 block">
+                Valor Nominal (R$)
+              </Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                placeholder="0,00"
+                className="text-xs h-9 font-mono font-semibold bg-secondary/50"
+                {...register("amount")}
+              />
+              {errors.amount && (
+                <p className="text-[11px] text-destructive mt-1 font-mono">{errors.amount.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="date" className="text-xs font-semibold text-foreground mb-1 block">
+                Data do Lançamento
+              </Label>
+              <Input id="date" type="date" className="text-xs h-9 font-mono bg-secondary/50" {...register("date")} />
+              {errors.date && (
+                <p className="text-[11px] text-destructive mt-1 font-mono">{errors.date.message}</p>
+              )}
+            </div>
           </div>
 
-          {/* Data */}
-          <div className="space-y-2">
-            <Label htmlFor="date">Data</Label>
-            <Input id="date" type="date" {...register("date")} />
-            {errors.date && (
-              <p className="text-xs text-destructive">{errors.date.message}</p>
-            )}
-          </div>
-
-          {/* Conta */}
-          <div className="space-y-2">
-            <Label htmlFor="accountId">Conta / Carteira</Label>
+          {/* Conta Destino / Origem (Obrigatório) */}
+          <div>
+            <Label htmlFor="accountId" className="text-xs font-semibold text-foreground mb-1 block">
+              Conta de Liquidação
+            </Label>
             <Select
               value={watch("accountId") || ""}
-              onValueChange={(val) => setValue("accountId", val)}
+              onValueChange={(val) => setValue("accountId", val, { shouldValidate: true })}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a conta destino" />
+              <SelectTrigger className="w-full text-xs h-9 bg-secondary/50">
+                <SelectValue placeholder="Selecione a conta" />
               </SelectTrigger>
               <SelectContent>
                 {accounts.map((acc) => (
-                  <SelectItem key={acc.id} value={acc.id}>
-                    {acc.name} (Saldo: R$ {acc.balance.toFixed(2)})
+                  <SelectItem key={acc.id} value={acc.id} className="text-xs">
+                    {acc.name} (Saldo: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(acc.balance)})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {errors.accountId && (
-              <p className="text-xs text-destructive">{errors.accountId.message}</p>
+              <p className="text-[11px] text-destructive mt-1 font-mono">{errors.accountId.message}</p>
             )}
           </div>
 
+
           {/* Categoria */}
-          <div className="space-y-2">
-            <Label htmlFor="categoryId">Categoria</Label>
+          <div>
+            <Label htmlFor="categoryId" className="text-xs font-semibold text-foreground mb-1 block">
+              Classificação Categórica
+            </Label>
             <Select
               value={watch("categoryId") || "sem-categoria"}
               onValueChange={(val) => setValue("categoryId", val === "sem-categoria" ? "" : val)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a categoria (opcional)" />
+              <SelectTrigger className="w-full text-xs h-9 bg-secondary/50">
+                <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sem-categoria">Sem categoria</SelectItem>
+                <SelectItem value="sem-categoria" className="text-xs">
+                  Sem categoria
+                </SelectItem>
                 {filteredCategories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
+                  <SelectItem key={cat.id} value={cat.id} className="text-xs">
                     {cat.name}
                   </SelectItem>
                 ))}
@@ -277,21 +293,36 @@ export function AddTransactionDialog({
           </div>
 
           {/* Observações */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
+          <div>
+            <Label htmlFor="notes" className="text-xs font-semibold text-foreground mb-1 block">
+              Observações e Notas Fiscais (Opcional)
+            </Label>
             <Textarea
               id="notes"
-              placeholder="Algum detalhe adicional..."
+              placeholder="Número de protocolo, detalhes de parcelamento..."
+              rows={2}
+              className="text-xs bg-secondary/50 resize-none"
               {...register("notes")}
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs h-8"
+              onClick={() => onOpenChange(false)}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Salvando..." : isEditing ? "Salvar Alterações" : "Adicionar"}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSubmitting}
+              className="text-xs h-8 bg-foreground text-background hover:opacity-90 font-semibold"
+            >
+              {isSubmitting ? "Processando..." : isEditing ? "Salvar Alterações" : "Efetivar Lançamento"}
             </Button>
           </div>
         </form>
@@ -299,3 +330,4 @@ export function AddTransactionDialog({
     </Dialog>
   )
 }
+

@@ -1,129 +1,249 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *, .purple-theme *));
+@custom-variant dark (&:is(.dark *, .purple *, .purple-theme *));
 
-:root {
-  --background: oklch(0.12 0.01 260);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.16 0.01 260);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.16 0.01 260);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.75 0.15 160);
-  --primary-foreground: oklch(0.12 0.01 260);
-  --secondary: oklch(0.22 0.01 260);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.22 0.01 260);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.65 0.18 45);
-  --accent-foreground: oklch(0.12 0.01 260);
-  --destructive: oklch(0.6 0.2 25);
-  --destructive-foreground: oklch(0.95 0 0);
-  --border: oklch(0.25 0.01 260);
-  --input: oklch(0.22 0.01 260);
-  --ring: oklch(0.75 0.15 160);
-  --chart-1: oklch(0.75 0.15 160);
-  --chart-2: oklch(0.65 0.18 45);
-  --chart-3: oklch(0.65 0.15 220);
-  --chart-4: oklch(0.7 0.12 330);
-  --chart-5: oklch(0.6 0.2 25);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.14 0.01 260);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.75 0.15 160);
-  --sidebar-primary-foreground: oklch(0.12 0.01 260);
-  --sidebar-accent: oklch(0.22 0.01 260);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.25 0.01 260);
-  --sidebar-ring: oklch(0.75 0.15 160);
+:root,
+.light {
+  /* ========================================
+     1. TEMA CLARO (Clean Light Mode)
+     ========================================
+     Paleta: Branco puro com tons de cinza azulado (Slate)
+     Contraste Alto: Texto escuro (#0f172a) em fundo claro
+     Uso: Modo padrão, ambiente bem iluminado
+  ======================================== */
+  
+  /* CORES BASE - Definem a aparência geral */
+  --background: #f8fafc;  /* Fundo principal: Cinza azulado MUITO claro - espaço livre na página */
+  --foreground: #0f172a;  /* Texto principal: Azul-cinza muito escuro - legibilidade máxima */
+  
+  /* CARDS E CONTAINERS - Áreas destacadas */
+  --card: #ffffff;        /* Fundo de cards/boxes: Branco puro - contraste com background */
+  --card-foreground: #0f172a; /* Texto dentro de cards: Mesmo tom escuro principal */
+  
+  /* POPOVERS E TOOLTIPS - Elementos flutuantes */
+  --popover: #ffffff;     /* Fundo de popovers: Branco puro - destaque visual */
+  --popover-foreground: #0f172a; /* Texto em popovers: Azul-cinza escuro */
+  
+  /* COR PRIMÁRIA - Ações principais, botões principais */
+  --primary: #0f766e;     /* Teal escuro: Usado em botões "Adicionar", links principais - ALTERAR AQUI se quiser mudar o tom verde */
+  --primary-foreground: #ffffff; /* Texto em botões primários: Branco para contraste máximo */
+  
+  /* COR SECUNDÁRIA - Elementos menos importantes */
+  --secondary: #f1f5f9;   /* Cinza claro: Fundo de inputs, botões secundários - LEVEMENTE diferente do background */
+  --secondary-foreground: #0f172a; /* Texto em secundário: Azul-cinza escuro */
+  
+  /* COR MUTED - Elementos desabilitados/menos visíveis */
+  --muted: #f1f5f9;       /* Fundo muted: Mesmo cinza claro de secondary */
+  --muted-foreground: #64748b; /* Texto muted: Cinza médio - reduz visibilidade propositalmente */
+  
+  /* COR ACCENT - Destaques especiais */
+  --accent: #f8fafc;      /* Fundo accent: Mesmo do background (subtil) */
+  --accent-foreground: #0f172a; /* Texto accent: Azul-cinza escuro */
+  
+  /* CORES DE ESTADO - Feedback visual */
+  --destructive: #dc2626; /* Vermelho: Deletar, cancelar, ações perigosas */
+  --destructive-foreground: #ffffff; /* Texto destrutivo: Branco para avisar */
+  
+  --success: #059669;     /* Verde esmeralda: Salvo, sucesso, receitas - ALTERAR AQUI para receitas */
+  --success-foreground: #ffffff; /* Texto sucesso: Branco */
+  
+  --warning: #d97706;     /* Âmbar/Amarelo: Atenção, alerta - ALTERAR AQUI para avisos */
+  --warning-foreground: #ffffff; /* Texto aviso: Branco */
+  
+  /* BORDAS E INPUTS */
+  --border: #e2e8f0;      /* Cor de bordas: Cinza muito claro - separação sutil entre elementos */
+  --input: #e2e8f0;       /* Fundo de inputs: Mesmo cinza das bordas */
+  --ring: #0f766e;        /* Cor do foco (ring): Teal primário - destaca elemento ativo */
+  
+  /* ========================================
+     CORES DE GRÁFICOS - Paleta categórica acessível
+     (Otimizada para daltônicos - cores distintas por matiz e luminância)
+     Usado em: Gráficos de pizza, linhas, barras em expense-breakdown.tsx
+  ======================================== */
+  --chart-1: #2563eb;     /* Azul Royal - Moradia, principal despesa */
+  --chart-2: #d97706;     /* Âmbar Quente - Alimentação, segunda maior despesa */
+  --chart-3: #0d9488;     /* Teal - Transporte, deslocamento */
+  --chart-4: #7c3aed;     /* Roxo/Violeta - Educação, investimento pessoal */
+  --chart-5: #dc2626;     /* Vermelho Carmim - Saúde, emergências médicas */
+  --chart-6: #be185d;     /* Framboesa/Rosa - Lazer, diversão */
+  --chart-7: #65a30d;     /* Verde Oliva - Vestuário, roupas */
+  --chart-8: #475569;     /* Slate Médio - Assinaturas, serviços recorrentes */
+  --chart-9: #64748b;     /* Cinza Grafite - Outras categorias não mapeadas */
+
+  --radius: 0.5rem;       /* Arredondamento de bordas: 8px */
+  
+  /* ========================================
+     CORES DA SIDEBAR - Painel lateral esquerdo
+  ======================================== */
+  --sidebar: #ffffff;          /* Fundo da sidebar: Branco puro */
+  --sidebar-foreground: #0f172a; /* Texto na sidebar: Azul-cinza escuro */
+  --sidebar-primary: #0f766e;   /* Item ativo da sidebar: Teal primário */
+  --sidebar-primary-foreground: #ffffff; /* Texto item ativo: Branco */
+  --sidebar-accent: #f1f5f9;    /* Hover na sidebar: Cinza claro */
+  --sidebar-accent-foreground: #0f172a; /* Texto hover: Azul-cinza escuro */
+  --sidebar-border: #e2e8f0;    /* Borda da sidebar: Cinza muito claro */
+  --sidebar-ring: #0f766e;      /* Foco na sidebar: Teal primário */
 }
 
 .dark {
-  --background: oklch(0.12 0.01 260);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.16 0.01 260);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.16 0.01 260);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.75 0.15 160);
-  --primary-foreground: oklch(0.12 0.01 260);
-  --secondary: oklch(0.22 0.01 260);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(100% 0.00011 271.152);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.65 0.18 45);
-  --accent-foreground: oklch(0.12 0.01 260);
-  --destructive: oklch(0.6 0.2 25);
-  --destructive-foreground: oklch(0.95 0 0);
-  --border: oklch(0.25 0.01 260);
-  --input: oklch(0.22 0.01 260);
-  --ring: oklch(0.75 0.15 160);
-  --chart-1: oklch(0.75 0.15 160);
-  --chart-2: oklch(0.65 0.18 45);
-  --chart-3: oklch(0.65 0.15 220);
-  --chart-4: oklch(0.7 0.12 330);
-  --chart-5: oklch(0.6 0.2 25);
-  --sidebar: oklch(0.14 0.01 260);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.75 0.15 160);
-  --sidebar-primary-foreground: oklch(0.12 0.01 260);
-  --sidebar-accent: oklch(0.22 0.01 260);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.25 0.01 260);
-  --sidebar-ring: oklch(0.75 0.15 160);
+  /* ========================================
+     2. TEMA ESCURO (Jet Black OLED - Máximo Contraste)
+     ========================================
+     Paleta: Preto puro com tons cinza claros (minimiza consumo OLED)
+     Contraste Alto: Texto claro (#f4f4f5) em fundo escuro preto
+     Uso: Modo noturno, redução de fadiga ocular, economia de bateria OLED
+     Diferença do Light: Verde mais brilhante (#10b981) como primária para legibilidade
+  ======================================== */
+  
+  /* CORES BASE */
+  --background: #050505;  /* Fundo principal: Preto puro - consumo mínimo de bateria OLED */
+  --foreground: #f4f4f5;  /* Texto principal: Branco quase puro - máximo contraste */
+  
+  /* CARDS E CONTAINERS */
+  --card: #121212;        /* Fundo de cards: Cinza MUITO escuro (quase preto) - sutil separação */
+  --card-foreground: #f4f4f5; /* Texto em cards: Branco quase puro */
+  
+  /* POPOVERS E TOOLTIPS */
+  --popover: #121212;     /* Fundo popover: Cinza muito escuro */
+  --popover-foreground: #f4f4f5; /* Texto popover: Branco */
+  
+  /* COR PRIMÁRIA - Alterada para verde mais brilhante no dark */
+  --primary: #10b981;     /* Verde Esmeralda BRILHANTE: Mais visível que no light - ALTERAR AQUI para mudar tom */
+  --primary-foreground: #050505; /* Texto primário: Preto puro (contraste com verde) */
+  
+  /* COR SECUNDÁRIA */
+  --secondary: #1a1a1a;   /* Cinza escuro: Mais claro que o fundo base */
+  --secondary-foreground: #f4f4f5; /* Texto secundário: Branco */
+  
+  /* COR MUTED */
+  --muted: #1a1a1a;       /* Fundo muted: Cinza escuro */
+  --muted-foreground: #a1a1aa; /* Texto muted: Cinza médio - reduz visibilidade */
+  
+  /* COR ACCENT */
+  --accent: #1a1a1a;      /* Fundo accent: Cinza escuro */
+  --accent-foreground: #f4f4f5; /* Texto accent: Branco */
+  
+  /* CORES DE ESTADO - Mais brilhantes que light mode para visibilidade */
+  --destructive: #ef4444; /* Vermelho mais brilhante: Deletar, ações perigosas */
+  --destructive-foreground: #ffffff; /* Texto: Branco */
+  
+  --success: #10b981;     /* Verde esmeralda: Sucesso, receitas - MESMO DO PRIMARY */
+  --success-foreground: #050505; /* Texto: Preto */
+  
+  --warning: #f59e0b;     /* Âmbar mais brilhante: Atenção e avisos */
+  --warning-foreground: #050505; /* Texto: Preto para contraste */
+  
+  /* BORDAS E INPUTS */
+  --border: #242424;      /* Cor de bordas: Cinza escuro - separação sutil */
+  --input: #242424;       /* Fundo de inputs: Cinza escuro */
+  --ring: #10b981;        /* Ring de foco: Verde esmeralda brilhante */
+  
+  /* ========================================
+     CORES DE GRÁFICOS - Versão mais brilhante para dark mode
+  ======================================== */
+  --chart-1: #3b82f6;     /* Azul mais brilhante - Moradia */
+  --chart-2: #f59e0b;     /* Âmbar mais brilhante - Alimentação */
+  --chart-3: #14b8a6;     /* Teal mais brilhante - Transporte */
+  --chart-4: #a855f7;     /* Roxo mais brilhante - Educação */
+  --chart-5: #f87171;     /* Vermelho mais brilhante - Saúde */
+  --chart-6: #f43f5e;     /* Framboesa mais brilhante - Lazer */
+  --chart-7: #84cc16;     /* Verde Lima mais brilhante - Vestuário */
+  --chart-8: #94a3b8;     /* Slate mais brilhante - Assinaturas */
+  --chart-9: #cbd5e1;     /* Cinza mais brilhante - Outros */
+
+  /* CORES DA SIDEBAR */
+  --sidebar: #0a0a0a;     /* Fundo sidebar: Preto quase puro */
+  --sidebar-foreground: #f4f4f5; /* Texto sidebar: Branco */
+  --sidebar-primary: #10b981;   /* Item ativo: Verde esmeralda brilhante */
+  --sidebar-primary-foreground: #050505; /* Texto item ativo: Preto */
+  --sidebar-accent: #1a1a1a;    /* Hover sidebar: Cinza escuro */
+  --sidebar-accent-foreground: #f4f4f5; /* Texto hover: Branco */
+  --sidebar-border: #242424;    /* Borda sidebar: Cinza escuro */
+  --sidebar-ring: #10b981;      /* Foco sidebar: Verde esmeralda */
 }
 
+.purple,
 .purple-theme {
-  --background: oklch(0.14 0.03 290);
-  --foreground: oklch(0.96 0.01 290);
+  /* ========================================
+     3. TEMA ROXO (Ametista/Berinjela Premium)
+     ========================================
+     Paleta: Roxo muito escuro com tons roxo-claros (Premium/Elegante)
+     Contraste: Texto roxo-claro (#f5f3ff) em fundo roxo muito escuro
+     Uso: Tema alternativo premium, personalização de usuários
+     Diferença: Roxo (#a855f7) como cor primária, todas as cores ajustadas para roxo
+  ======================================== */
+  
+  /* CORES BASE */
+  --background: #0c0714;  /* Fundo principal: Roxo ultra escuro - tema premium */
+  --foreground: #f5f3ff;  /* Texto principal: Roxo quase branco - alta legibilidade */
+  
+  /* CARDS E CONTAINERS */
+  --card: #171123;        /* Fundo de cards: Roxo muito escuro (levemente mais claro que background) */
+  --card-foreground: #f5f3ff; /* Texto em cards: Roxo claro */
+  
+  /* POPOVERS E TOOLTIPS */
+  --popover: #171123;     /* Fundo popover: Roxo muito escuro */
+  --popover-foreground: #f5f3ff; /* Texto popover: Roxo claro */
+  
+  /* COR PRIMÁRIA - Roxo vibrante como tema principal */
+  --primary: #a855f7;     /* Roxo Vibrante: Ação principal, botões - ALTERAR AQUI para mudar tom roxo */
+  --primary-foreground: #0c0714; /* Texto primário: Roxo muito escuro (contraste com roxo vibrante) */
+  
+  /* COR SECUNDÁRIA */
+  --secondary: #211933;   /* Roxo escuro médio: Inputs, botões secundários */
+  --secondary-foreground: #f5f3ff; /* Texto secundário: Roxo claro */
+  
+  /* COR MUTED */
+  --muted: #211933;       /* Fundo muted: Roxo escuro médio */
+  --muted-foreground: #a799c4; /* Texto muted: Roxo médio - reduz visibilidade */
+  
+  /* COR ACCENT */
+  --accent: #211933;      /* Fundo accent: Roxo escuro médio */
+  --accent-foreground: #f5f3ff; /* Texto accent: Roxo claro */
+  
+  /* CORES DE ESTADO */
+  --destructive: #ef4444; /* Vermelho: Deletar, ações perigosas (mantém vermelho universal) */
+  --destructive-foreground: #ffffff; /* Texto: Branco */
+  
+  --success: #10b981;     /* Verde esmeralda: Sucesso, receitas (mantém verde universal) */
+  --success-foreground: #0c0714; /* Texto: Roxo muito escuro */
+  
+  --warning: #f59e0b;     /* Âmbar: Atenção (mantém âmbar universal) */
+  --warning-foreground: #0c0714; /* Texto: Roxo muito escuro */
+  
+  /* BORDAS E INPUTS */
+  --border: #2b1e42;      /* Cor de bordas: Roxo escuro - separação sutil */
+  --input: #2b1e42;       /* Fundo de inputs: Roxo escuro */
+  --ring: #a855f7;        /* Ring de foco: Roxo vibrante (primária) */
+  
+  /* ========================================
+     CORES DE GRÁFICOS - Manuém tonalidades mas em paleta roxo-compatible
+  ======================================== */
+  --chart-1: #3b82f6;     /* Azul - Moradia */
+  --chart-2: #f59e0b;     /* Âmbar - Alimentação */
+  --chart-3: #14b8a6;     /* Teal - Transporte */
+  --chart-4: #c084fc;     /* Roxo mais claro (substitui violeta) - Educação */
+  --chart-5: #f87171;     /* Vermelho - Saúde */
+  --chart-6: #f43f5e;     /* Framboesa - Lazer */
+  --chart-7: #84cc16;     /* Verde Lima - Vestuário */
+  --chart-8: #a799c4;     /* Roxo médio (substitui slate) - Assinaturas */
+  --chart-9: #cbd5e1;     /* Cinza - Outros */
 
-  --card: oklch(0.18 0.03 290);
-  --card-foreground: oklch(0.96 0.01 290);
-
-  --popover: oklch(0.18 0.03 290);
-  --popover-foreground: oklch(0.96 0.01 290);
-
-  --primary: oklch(0.72 0.22 300);
-  /* Roxo principal */
-  --primary-foreground: oklch(0.98 0.01 290);
-
-  --secondary: oklch(0.25 0.04 290);
-  --secondary-foreground: oklch(0.96 0.01 290);
-
-  --muted: oklch(0.23 0.03 290);
-  --muted-foreground: oklch(0.72 0.02 290);
-
-  --accent: oklch(0.78 0.18 320);
-  /* Lilás claro */
-  --accent-foreground: oklch(0.14 0.03 290);
-
-  --destructive: oklch(0.65 0.22 25);
-  --destructive-foreground: oklch(0.96 0.01 290);
-
-  --border: oklch(0.30 0.04 290);
-  --input: oklch(0.25 0.04 290);
-  --ring: oklch(0.72 0.22 300);
-
-  --chart-1: oklch(0.72 0.22 300);
-  --chart-2: oklch(0.78 0.18 320);
-  --chart-3: oklch(0.65 0.15 220);
-  --chart-4: oklch(0.7 0.12 330);
-  --chart-5: oklch(0.6 0.2 25);
-
-  --sidebar: oklch(0.16 0.03 290);
-  --sidebar-foreground: oklch(0.96 0.01 290);
-  --sidebar-primary: oklch(0.72 0.22 300);
-  --sidebar-primary-foreground: oklch(0.98 0.01 290);
-  --sidebar-accent: oklch(0.25 0.04 290);
-  --sidebar-accent-foreground: oklch(0.96 0.01 290);
-  --sidebar-border: oklch(0.30 0.04 290);
-  --sidebar-ring: oklch(0.72 0.22 300);
+  /* CORES DA SIDEBAR */
+  --sidebar: #100a1c;     /* Fundo sidebar: Roxo muito escuro (mais escuro que background) */
+  --sidebar-foreground: #f5f3ff; /* Texto sidebar: Roxo claro */
+  --sidebar-primary: #a855f7;   /* Item ativo: Roxo vibrante */
+  --sidebar-primary-foreground: #0c0714; /* Texto item ativo: Roxo muito escuro */
+  --sidebar-accent: #211933;    /* Hover sidebar: Roxo escuro médio */
+  --sidebar-accent-foreground: #f5f3ff; /* Texto hover: Roxo claro */
+  --sidebar-border: #2b1e42;    /* Borda sidebar: Roxo escuro */
+  --sidebar-ring: #a855f7;      /* Foco sidebar: Roxo vibrante */
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: var(--font-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-mono), monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -140,6 +260,10 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -148,9 +272,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+  --color-chart-9: var(--chart-9);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -165,9 +293,38 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  .font-mono, [data-tabular="true"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Barra de rolagem customizada discreta e elegante */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
   }
 }

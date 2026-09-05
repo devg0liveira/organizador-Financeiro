@@ -1,34 +1,58 @@
-import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { FinanceProvider } from '@/hooks/use-finance'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const fontSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+})
+
+const fontMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  weight: ['400', '500', '600'],
+  display: 'swap',
+})
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#090d16' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+}
 
 export const metadata: Metadata = {
-  title: 'NexBank - Dashboard Financeiro',
-  description: 'Interface bancária com gráficos e análise de fluxo de caixa',
-  generator: 'v0.app',
+  title: 'NexBank | Gestão e Análise Financeira Consolidada',
+  description:
+    'Plataforma profissional para controle de receitas, despesas, fluxo de caixa e planejamento orçamentário com visualizações de dados precisas e confiáveis.',
+  keywords: [
+    'gestão financeira',
+    'controle de gastos',
+    'fluxo de caixa',
+    'organizador financeiro',
+    'balanço orçamentário',
+    'NexBank',
+  ],
+  authors: [{ name: 'NexBank Financial Systems' }],
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
     apple: '/apple-icon.png',
+  },
+  openGraph: {
+    title: 'NexBank | Gestão e Análise Financeira Consolidada',
+    description:
+      'Acompanhe seu fluxo de caixa, despesas por categoria e saldos patrimoniais com máxima clareza.',
+    type: 'website',
+    locale: 'pt_BR',
   },
 }
 
@@ -38,13 +62,19 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-background">
+    <html lang="pt-BR" suppressHydrationWarning className={`${fontSans.variable} ${fontMono.variable}`}>
+      <body className="font-sans antialiased bg-background text-foreground min-h-screen">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
-          themes={["dark", "purple-theme"]}
+          themes={["light", "dark", "purple", "purple-theme"]}
+          value={{
+            light: "light",
+            dark: "dark",
+            purple: "purple",
+            "purple-theme": "purple",
+          }}
           disableTransitionOnChange
         >
           <FinanceProvider>
@@ -57,3 +87,4 @@ export default function RootLayout({
     </html>
   )
 }
+

@@ -33,8 +33,8 @@ export function formatDateToLocalISO(date: Date): string {
  * Formata uma data de transação (armazenada em UTC) para exibição pt-BR.
  * Usa timeZone: "UTC" para evitar o recuo de fuso horário.
  */
-export function formatTransactionDate(dateStr: string): string {
-  const d = new Date(dateStr)
+export function formatTransactionDate(dateStr: string | Date): string {
+  const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr
   return d.toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "short",

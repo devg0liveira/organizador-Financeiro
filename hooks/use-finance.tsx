@@ -100,9 +100,17 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         setDashboardData(dashData)
       } else {
         console.error("Failed to fetch finance data")
+        setTransactions([])
+        setCategories([])
+        setAccounts([])
+        setDashboardData(null)
       }
     } catch (error) {
       console.error("Error loading finance data:", error)
+      setTransactions([])
+      setCategories([])
+      setAccounts([])
+      setDashboardData(null)
     } finally {
       setIsLoading(false)
     }

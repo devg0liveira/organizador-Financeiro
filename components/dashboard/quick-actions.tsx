@@ -1,42 +1,64 @@
 "use client"
 
-import { TrendingUp, TrendingDown, Plus } from "lucide-react"
+import { ArrowDownLeft, ArrowUpRight, Plus, SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface QuickActionsProps {
   onActionClick: (type: "income" | "expense") => void
 }
 
-const actions = [
-  { id: "income" as const, label: "Adicionar Receita", icon: TrendingUp },
-  { id: "expense" as const, label: "Adicionar Despesa", icon: TrendingDown },
-]
-
 export function QuickActions({ onActionClick }: QuickActionsProps) {
   return (
-    <div className="p-6 rounded-xl bg-card border border-border">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-foreground">Ações Rápidas</h3>
-        <Button variant="ghost" size="icon" className="w-8 h-8">
-          <Plus className="w-4 h-4" />
-        </Button>
+    <div className="p-4 sm:p-5 rounded-lg bg-card border border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+        <div>
+          <h2 className="text-sm font-semibold tracking-tight text-foreground uppercase tracking-wider">
+            Operações Rápidas
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Lançamento imediato de receitas ou despesas com conciliação automática
+          </p>
+        </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {actions.map((action) => (
-          <button
-            key={action.id}
-            onClick={() => onActionClick(action.id)}
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors group"
-          >
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-              <action.icon className="w-5 h-5 text-primary" />
-            </div>
-            <span className="text-sm font-medium text-foreground">
-              {action.label}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => onActionClick("income")}
+          className="flex items-center gap-3.5 p-3.5 rounded-md bg-secondary/70 hover:bg-secondary border border-border transition-colors text-left group"
+        >
+          <div className="flex items-center justify-center w-9 h-9 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors shrink-0">
+            <ArrowDownLeft className="w-5 h-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block text-xs font-bold text-foreground">
+              Registrar Receita
             </span>
-          </button>
-        ))}
+            <span className="block text-[11px] text-muted-foreground truncate">
+              Salário, comissões, rendimentos ou entradas avulsas
+            </span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onActionClick("expense")}
+          className="flex items-center gap-3.5 p-3.5 rounded-md bg-secondary/70 hover:bg-secondary border border-border transition-colors text-left group"
+        >
+          <div className="flex items-center justify-center w-9 h-9 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 group-hover:bg-red-500/20 transition-colors shrink-0">
+            <ArrowUpRight className="w-5 h-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block text-xs font-bold text-foreground">
+              Registrar Despesa
+            </span>
+            <span className="block text-[11px] text-muted-foreground truncate">
+              Custos fixos, contas, compras ou parcelas
+            </span>
+          </div>
+        </button>
       </div>
     </div>
   )
 }
+
